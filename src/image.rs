@@ -1,4 +1,4 @@
-use crate ::isl;
+use crate::isl;
 
 use image;
 use image::GenericImageView;
@@ -14,8 +14,8 @@ pub fn open(path: &str) -> Image {
 
     for pixel in img.pixels() {
         let x = pixel.0 as usize;
-        let y = pixel.1 as usize;
-        let [r, g, b, a] = pixel.2.0;
+        let y = (h - pixel.1 - 1) as usize;
+        let [r, g, b, a] = pixel.2 .0;
         result.0[y][x].x = (r as f32) / 255.0;
         result.0[y][x].y = (g as f32) / 255.0;
         result.0[y][x].z = (b as f32) / 255.0;

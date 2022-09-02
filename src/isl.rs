@@ -41,8 +41,8 @@ pub enum Orientation {
 impl Display for Orientation {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Self::Vertical => write!(f, "[Y]"),
-            Self::Horizontal => write!(f, "[X]"),
+            Self::Vertical => write!(f, "[X]"),
+            Self::Horizontal => write!(f, "[Y]"),
         }
     }
 }
@@ -82,7 +82,7 @@ impl Display for Move {
                 orientation,
                 line_number,
             } => {
-                write!(f, "cut {block} {orientation} {line_number}")
+                write!(f, "cut {block} {orientation} [{line_number}]")
             }
             Move::Color { ref block, color } => {
                 write!(f, "color {} {}", block, format_color(color))
@@ -108,7 +108,7 @@ pub struct Program(pub Vec<Move>);
 impl Display for Program {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for m in &self.0 {
-            write!(f, "{m}");
+            writeln!(f, "{m}");
         }
         Ok(())
     }
