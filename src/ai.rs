@@ -1,5 +1,6 @@
 use crate::image;
 use crate::isl;
+use std::collections::{BinaryHeap, HashMap};
 
 pub struct OneColorAI {}
 
@@ -181,13 +182,9 @@ impl CrossAI {
     }
 
     pub fn solve(&self, image: &image::Image) -> isl::Program {
-        // pcut してく
-        // 再帰的
+        // 再帰的 に pcut してく
         // 各マスの色に何を塗るかを集計して
         // 分割しなくていいならやめる (-> 再帰でなんかそれっぽく書く)
-        // // まずはここまで
-        //
-        // 一番多いのは最初にぬっちゃう (これまとめて塗るの)
         let height = image.0.len() as i32;
         let width = image.0[0].len() as i32;
 
@@ -198,6 +195,51 @@ impl CrossAI {
             isl::Point::new(width, height),
             0,
         );
+
+        // 一番多いのは最初にぬっちゃう
+        let mut hash = HashMap::new();
+        for m in &result {
+            if let isl::Move::Color { block_id: _, color } = m {
+                let s = isl::format_color(color);
+                let counter = hash.entry(s).or_insert(0);
+                *counter += 1;
+            }
+        }
+        let mut key = "";
+        let mut value = 0 as i32;
+        for (k, &v) in hash.iter() {
+            if value < v {
+                key = k;
+                value = v;
+            }
+        }
+
+        if key != "" {
+            for m in &result {
+                if let isl::Move::Color { block_id: _, color } = m {
+                    if isl::format_color(color) == key {
+                        let mut refined = vec![isl::Move::Color {
+                            block_id: isl::BlockId(vec![0]),
+                            color: color.clone(),
+                        }];
+                        for n in &result {
+                            if let isl::Move::Color {
+                                block_id: _,
+                                color: ncolor,
+                            } = n
+                            {
+                                if isl::format_color(ncolor) == key {
+                                    continue;
+                                }
+                            }
+                            refined.push(n.clone());
+                        }
+                        return isl::Program(refined);
+                    }
+                }
+            }
+        }
+
         isl::Program(result)
     }
 }

@@ -18,12 +18,12 @@ impl Display for BlockId {
 }
 
 pub type Point = IVec2;
-fn format_point(p: &Point) -> String {
+pub fn format_point(p: &Point) -> String {
     format!("[{}, {}]", p.x, p.y)
 }
 
 pub type Color = Vec4;
-fn format_color(c: &Color) -> String {
+pub fn format_color(c: &Color) -> String {
     format!(
         "[{}, {}, {}, {}]",
         (c.x * 255.0).round() as u32,
