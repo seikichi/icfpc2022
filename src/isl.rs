@@ -14,7 +14,7 @@ pub enum Orientation { Vertical, Horizontal }
 #[derive(Debug, Clone, PartialEq)]
 pub enum Move {
     PCut { block: Block, point: Point },
-    LCut { block: Block, orientation: Orientation, linueNumber: i32},
+    LCut { block: Block, orientation: Orientation, linue_number: i32},
     Color { block:Block, color: Color },
     Swap { a: Block, b: Block },
     Merge { a: Block, b: Block },

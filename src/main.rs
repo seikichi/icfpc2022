@@ -1,6 +1,5 @@
 mod isl;
-
-// Image ? Input type
+mod image;
 
 fn main() {
     let a = isl::Block(vec![0]);
@@ -9,4 +8,7 @@ fn main() {
     let program = vec![m];
 
     println!("Hello, Move: {:?}", program);
+
+    let image = image::Image(vec![vec![isl::Color { r: 0.0, g: 0.0, b: 0.0, a: 0.0 }]]);
+    println!("Hello, Image: {:?}", image);
 }
