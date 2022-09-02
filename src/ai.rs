@@ -22,7 +22,7 @@ impl OneColorAI {
         let color = sum / area;
 
         isl::Program(vec![isl::Move::Color {
-            block: isl::Block(vec![0]),
+            block_id: isl::BlockId(vec![0]),
             color,
         }])
     }
@@ -44,7 +44,7 @@ impl GridAI {
             // 最後の行は Y 軸のカットをしてはいけない
             if i < self.rows {
                 result.push(isl::Move::LCut {
-                    block: isl::Block(block_id.clone()),
+                    block_id: isl::BlockId(block_id.clone()),
                     orientation: isl::Orientation::Horizontal,
                     line_number: grid_height * (i as i32),
                 });
@@ -59,7 +59,7 @@ impl GridAI {
                 if j < self.cols {
                     // 最後の列は X 軸のカットをしてはいけない
                     result.push(isl::Move::LCut {
-                        block: isl::Block(x_block_id.clone()),
+                        block_id: isl::BlockId(x_block_id.clone()),
                         orientation: isl::Orientation::Vertical,
                         line_number: grid_width * (j as i32),
                     });
@@ -76,7 +76,7 @@ impl GridAI {
                     }
                 }
                 result.push(isl::Move::Color {
-                    block: isl::Block(x_block_id.clone()),
+                    block_id: isl::BlockId(x_block_id.clone()),
                     color: sum / (grid_height * grid_width) as f32,
                 });
 

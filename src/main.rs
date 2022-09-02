@@ -1,6 +1,8 @@
 mod isl;
 mod image;
 mod ai;
+mod simulator;
+
 use std::fs;
 use std::env;
 
