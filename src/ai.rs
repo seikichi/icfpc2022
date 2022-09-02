@@ -28,7 +28,7 @@ impl OneColorAI {
             a: a_sum / area,
         };
 
-        vec![isl::Move::Color { block: isl::Block(vec![0]), color }]
+        isl::Program(vec![isl::Move::Color { block: isl::Block(vec![0]), color }])
     }
 }
 

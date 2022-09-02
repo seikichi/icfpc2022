@@ -1,10 +1,21 @@
 mod isl;
 mod image;
 mod ai;
+use std::fs;
+use std::env;
 
 fn main() {
-    let img = image::open("problems/1.png");
+    let args: Vec<String> = env::args().collect();
+    if args.len() != 3 {
+        println!("Usage: solver input.png output.isl");
+        return;
+    }
+    let input_path = &args[1];
+    let output_path = &args[2];
+
+    let img = image::open(input_path);
     let solver = ai::OneColorAI {};
     let program = solver.solve(&img);
-    println!("{program:?}");
+
+    fs::write(output_path, format!("{program}")).unwrap();
 }

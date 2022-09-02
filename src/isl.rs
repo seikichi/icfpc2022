@@ -125,6 +125,15 @@ fn move_display_test() {
     // TODO
 }
 
-// いる？
-pub struct Program(Vec<Move>);
+#[derive(Debug, Clone, PartialEq)]
+pub struct Program(pub Vec<Move>);
+
+impl Display for Program {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        for m in &self.0 {
+            write!(f, "{m}");
+        }
+        Ok(())
+    }
+}
 
