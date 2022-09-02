@@ -9,6 +9,8 @@ fn main() {
 
     println!("Hello, Move: {:?}", program);
 
-    let image = image::Image(vec![vec![isl::Color { r: 0.0, g: 0.0, b: 0.0, a: 0.0 }]]);
-    println!("Hello, Image: {:?}", image);
+    let img = image::open("problems/1.png");
+    for i in 0..10 {
+        println!("{:?}", img.0[0][i]);
+    }
 }
