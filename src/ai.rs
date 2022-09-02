@@ -22,8 +22,7 @@ impl OneColorAI {
             }
         }
 
-        let area = (image.0.len() * image.0[0].len()) as f32;
-        let color = sum / area;
+        let color = sum / image.area() as f32;
 
         isl::Program(vec![isl::Move::Color {
             block_id: isl::BlockId(vec![0]),
@@ -34,8 +33,8 @@ impl OneColorAI {
 
 impl GridAI {
     pub fn solve(&self, image: &image::Image) -> isl::Program {
-        let height = image.0.len();
-        let width = image.0[0].len();
+        let height = image.height();
+        let width = image.width();
 
         let mut result = vec![];
         let grid_height = (height / self.rows) as i32;

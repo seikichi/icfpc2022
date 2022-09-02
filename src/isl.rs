@@ -103,18 +103,52 @@ impl Display for Move {
     }
 }
 
-#[test]
-fn move_display_test() {
-    // TODO
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn move_display_test() {
+        let pcut = Move::PCut {
+            block_id: BlockId(vec![0, 4, 2]),
+            point: IVec2::new(12, 34),
+        };
+        assert_eq!("cut [0.4.2] [12, 34]", format!("{}", pcut));
+
+        let lcut = Move::LCut {
+            block_id: BlockId(vec![0, 4, 2]),
+            orientation: Orientation::Horizontal,
+            line_number: 3,
+        };
+        assert_eq!("cut [0.4.2] [Y] [3]", format!("{}", lcut));
+
+        let color = Move::Color {
+            block_id: BlockId(vec![0, 4, 2]),
+            color: Color::new(1.0, 1.0, 0.5, 1.0),
+        };
+        assert_eq!("color [0.4.2] [255, 255, 128, 255]", format!("{}", color));
+
+        let swap = Move::Swap {
+            a: BlockId(vec![0, 4, 2]),
+            b: BlockId(vec![1]),
+        };
+        assert_eq!("swap [0.4.2] [1]", format!("{}", swap));
+
+        let merge = Move::Merge {
+            a: BlockId(vec![0, 4, 2]),
+            b: BlockId(vec![1]),
+        };
+        assert_eq!("merge [0.4.2] [1]", format!("{}", merge));
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Program(pub Vec<Move>);
-
 impl Display for Program {
+    #[allow(unused_must_use)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for m in &self.0 {
-            writeln!(f, "{m}");
+            writeln!(f, "{m}")?;
         }
         Ok(())
     }
