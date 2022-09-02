@@ -16,9 +16,14 @@ impl SimpleBlock {
     pub fn rasterize(&self, image: &mut Image) {
         let w = image.width();
         let h = image.height();
-        let t = std::cmp::max(0, self.p.y as usize);
+        self.partial_rasterize(glam::IVec2::ZERO, Point::new(w as i32, h as i32), image);
+    }
+    pub fn partial_rasterize(&self, p: Point, size: Point, image: &mut Image) {
+        let w = std::cmp::min((p.x + size.x) as usize, image.width());
+        let h = std::cmp::min((p.y + size.y) as usize, image.height());
+        let t = std::cmp::max(p.y as usize, self.p.y as usize);
         let b = std::cmp::min(h, (self.p.y + self.size.y) as usize);
-        let l = std::cmp::max(0, self.p.x as usize);
+        let l = std::cmp::max(p.x as usize, self.p.x as usize);
         let r = std::cmp::min(w, (self.p.x + self.size.x) as usize);
         for y in t..b {
             for x in l..r {
