@@ -13,6 +13,19 @@ impl SimpleBlock {
     pub fn new(p: Point, size: glam::IVec2, color: Color) -> Self {
         SimpleBlock { p, size, color }
     }
+    pub fn rasterize(&self, image: &mut Image) {
+        let w = image.0[0].len();
+        let h = image.0.len();
+        let t = std::cmp::max(0, self.p.y as usize);
+        let b = std::cmp::min(h, (self.p.y + self.size.y) as usize);
+        let l = std::cmp::max(0, self.p.x as usize);
+        let r = std::cmp::min(w, (self.p.x + self.size.x) as usize);
+        for y in t..b {
+            for x in l..r {
+                image.0[y][x] = self.color;
+            }
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -123,4 +136,27 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
         }
     }
     Some(())
+}
+
+fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
+    let mut image = Image(vec![vec![glam::Vec4::ZERO; w]; h]);
+    for (_, simple_block) in &state.blocks {
+        simple_block.rasterize(&mut image);
+    }
+    return image;
+}
+
+fn calc_state_similarity(state: &State, target_image: &Image) {
+    let mut current_image = target_image.clone();
+
+    // TODO
+}
+
+fn calc_score(program: &Program) {
+    // TODO
+}
+
+#[test]
+fn test_simulate() {
+    // TODO
 }
