@@ -1,10 +1,10 @@
-mod isl;
-mod image;
 mod ai;
+mod image;
+mod isl;
 mod simulator;
 
-use std::fs;
 use std::env;
+use std::fs;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -17,7 +17,8 @@ fn main() {
 
     let img = image::open(input_path);
     // let solver = ai::OneColorAI {};
-    let solver = ai::GridAI { rows: 10, cols: 10 };
+    // let solver = ai::GridAI { rows: 4, cols: 4 };
+    let solver = ai::CrossAI { size: 3 };
     let program = solver.solve(&img);
 
     fs::write(output_path, format!("{program}")).unwrap();
