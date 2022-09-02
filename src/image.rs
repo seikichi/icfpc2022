@@ -16,10 +16,10 @@ pub fn open(path: &str) -> Image {
         let x = pixel.0 as usize;
         let y = pixel.1 as usize;
         let [r, g, b, a] = pixel.2.0;
-        result.0[y][x].r = r as f32;
-        result.0[y][x].g = g as f32;
-        result.0[y][x].b = b as f32;
-        result.0[y][x].a = a as f32;
+        result.0[y][x].r = (r as f32) / 255.0;
+        result.0[y][x].g = (g as f32) / 255.0;
+        result.0[y][x].b = (b as f32) / 255.0;
+        result.0[y][x].a = (a as f32) / 255.0;
     }
 
     result
