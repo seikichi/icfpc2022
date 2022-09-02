@@ -32,6 +32,20 @@ impl SimpleBlock {
 pub struct State {
     pub blocks: HashMap<BlockId, SimpleBlock>,
 }
+impl State {
+    pub fn initial_state(w: i32, h: i32) -> Self {
+        let mut blocks = HashMap::new();
+        blocks.insert(
+            BlockId(vec![0]),
+            SimpleBlock::new(
+                Point::new(0, 0),
+                glam::IVec2::new(w, h),
+                Color::new(0.0, 0.0, 0.0, 0.0),
+            ),
+        );
+        State { blocks }
+    }
+}
 
 pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
     match mv {
@@ -137,6 +151,28 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
     }
     Some(())
 }
+pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
+    let (base, size) = match mv {
+        Move::PCut {
+            ref block_id,
+            point,
+        } => (10.0, state.blocks.get(block_id)?.size),
+        Move::LCut {
+            ref block_id,
+            orientation,
+            line_number,
+        } => (7.0, state.blocks.get(block_id)?.size),
+        Move::Color {
+            ref block_id,
+            color,
+        } => (5.0, state.blocks.get(block_id)?.size),
+        Move::Swap { ref a, ref b } => (3.0, state.blocks.get(a)?.size),
+        Move::Merge { ref a, ref b } => {
+            unimplemented!()
+        }
+    };
+    return Some(base * ((w * h) as f32 / (size.x * size.y) as f32).round());
+}
 
 fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
     let mut image = Image(vec![vec![glam::Vec4::ZERO; w]; h]);
@@ -146,14 +182,31 @@ fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
     return image;
 }
 
-fn calc_state_similarity(state: &State, target_image: &Image) {
-    let mut current_image = target_image.clone();
-
-    // TODO
+pub fn calc_state_similarity(state: &State, target_image: &Image) -> f32 {
+    let w = target_image.0[0].len();
+    let h = target_image.0.len();
+    let mut current_image = rasterize_state(state, w, h);
+    let mut similarity = 0.0;
+    for y in 0..h {
+        for x in 0..w {
+            let d = current_image.0[y][x] - target_image.0[y][x];
+            similarity += d.length();
+        }
+    }
+    return similarity * 0.05;
 }
 
-fn calc_score(program: &Program) {
-    // TODO
+pub fn calc_score(program: &Program, target_image: &Image) -> Option<f32> {
+    let h = target_image.0.len();
+    let w = target_image.0[0].len();
+    let mut state = State::initial_state(w as i32, h as i32);
+    let mut cost = 0.0;
+    for mv in program.0.iter() {
+        cost += move_cost(&state, mv, w, h)?;
+        simulate(&mut state, mv);
+    }
+    cost += calc_state_similarity(&state, target_image);
+    return Some(cost);
 }
 
 #[test]
