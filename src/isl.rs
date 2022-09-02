@@ -21,4 +21,5 @@ pub enum Move {
 }
 
 // いる？
-pub type Progam = Vec<Move>;
+pub struct Program(Vec<Move>);
+
