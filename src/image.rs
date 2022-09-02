@@ -5,12 +5,26 @@ use image::GenericImageView;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Image(pub Vec<Vec<isl::Color>>);
+impl Image {
+    pub fn width(&self) -> usize {
+        self.0[0].len()
+    }
+    pub fn height(&self) -> usize {
+        self.0.len()
+    }
+    pub fn area(&self) -> usize {
+        self.width() * self.height()
+    }
+    pub fn new(w: usize, h: usize) -> Self {
+        Image(vec![vec![glam::Vec4::ZERO; w as usize]; h as usize])
+    }
+}
 
 pub fn open(path: &str) -> Image {
     let img = image::open(path).unwrap();
     let (w, h) = img.dimensions();
 
-    let mut result = Image(vec![vec![glam::Vec4::ZERO; w as usize]; h as usize]);
+    let mut result = Image::new(w as usize, h as usize);
 
     for pixel in img.pixels() {
         let x = pixel.0 as usize;

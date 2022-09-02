@@ -14,8 +14,8 @@ impl SimpleBlock {
         SimpleBlock { p, size, color }
     }
     pub fn rasterize(&self, image: &mut Image) {
-        let w = image.0[0].len();
-        let h = image.0.len();
+        let w = image.width();
+        let h = image.height();
         let t = std::cmp::max(0, self.p.y as usize);
         let b = std::cmp::min(h, (self.p.y + self.size.y) as usize);
         let l = std::cmp::max(0, self.p.x as usize);
@@ -175,7 +175,7 @@ pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
 }
 
 fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
-    let mut image = Image(vec![vec![glam::Vec4::ZERO; w]; h]);
+    let mut image = Image::new(w, h);
     for (_, simple_block) in &state.blocks {
         simple_block.rasterize(&mut image);
     }
@@ -183,8 +183,8 @@ fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
 }
 
 pub fn calc_state_similarity(state: &State, target_image: &Image) -> f32 {
-    let w = target_image.0[0].len();
-    let h = target_image.0.len();
+    let w = target_image.width();
+    let h = target_image.height();
     let mut current_image = rasterize_state(state, w, h);
     let mut similarity = 0.0;
     for y in 0..h {
@@ -197,8 +197,8 @@ pub fn calc_state_similarity(state: &State, target_image: &Image) -> f32 {
 }
 
 pub fn calc_score(program: &Program, target_image: &Image) -> Option<f32> {
-    let h = target_image.0.len();
-    let w = target_image.0[0].len();
+    let h = target_image.height();
+    let w = target_image.width();
     let mut state = State::initial_state(w as i32, h as i32);
     let mut cost = 0.0;
     for mv in program.0.iter() {
