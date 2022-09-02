@@ -33,6 +33,37 @@ impl SimpleBlock {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use glam::IVec2;
+    use super::*;
+
+    #[test]
+    fn test_simple_block_rasterize() {
+        let red = Color::new(1.0, 0.0, 0.0, 1.0);
+        let white = Color::ZERO;
+        let simple_block = SimpleBlock::new(
+            IVec2::new(1, 2),
+            IVec2::new(5, 3),
+            red,
+        );
+
+        let mut image = Image::new(10, 4);
+        simple_block.rasterize(&mut image);
+
+        let expected = vec![
+            "..........",
+            "..........",
+            ".xxxxx....",
+            ".xxxxx....",
+        ].into_iter().map(|row|
+            row.chars().map(|c| if c == 'x' { red } else { white }).collect::<Vec<_>>()
+        ).collect::<Vec<_>>();
+
+        assert_eq!(expected, image.0);
+    }
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct State {
     pub blocks: HashMap<BlockId, SimpleBlock>,
