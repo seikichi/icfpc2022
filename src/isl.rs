@@ -112,6 +112,7 @@ fn move_display_test() {
 pub struct Program(pub Vec<Move>);
 
 impl Display for Program {
+    #[allow(unused_must_use)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         for m in &self.0 {
             writeln!(f, "{m}");

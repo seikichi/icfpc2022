@@ -155,18 +155,18 @@ pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
     let (base, size) = match mv {
         Move::PCut {
             ref block_id,
-            point,
+            point: _,
         } => (10.0, state.blocks.get(block_id)?.size),
         Move::LCut {
             ref block_id,
-            orientation,
-            line_number,
+            orientation: _,
+            line_number: _,
         } => (7.0, state.blocks.get(block_id)?.size),
         Move::Color {
             ref block_id,
-            color,
+            color: _,
         } => (5.0, state.blocks.get(block_id)?.size),
-        Move::Swap { ref a, ref b } => (3.0, state.blocks.get(a)?.size),
+        Move::Swap { ref a, b: _ } => (3.0, state.blocks.get(a)?.size),
         Move::Merge { ref a, ref b } => {
             unimplemented!()
         }
@@ -185,7 +185,7 @@ fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
 pub fn calc_state_similarity(state: &State, target_image: &Image) -> f32 {
     let w = target_image.width();
     let h = target_image.height();
-    let mut current_image = rasterize_state(state, w, h);
+    let current_image = rasterize_state(state, w, h);
     let mut similarity = 0.0;
     for y in 0..h {
         for x in 0..w {
