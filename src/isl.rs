@@ -1,5 +1,7 @@
 use std::fmt::Display;
 
+use glam::{IVec2, Vec4};
+
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Block(pub Vec<u32>);
 impl Display for Block {
@@ -15,45 +17,20 @@ impl Display for Block {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Point {
-    pub x: u32,
-    pub y: u32,
-}
-impl Point {
-    pub fn new(x: u32, y: u32) -> Self {
-        Point { x, y }
-    }
-}
-impl Display for Point {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "[{}, {}]", self.x, self.y)
-    }
+pub type Point = IVec2;
+fn format_point(p: &Point) -> String {
+    format!("[{}, {}]", p.x, p.y)
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub struct Color {
-    pub r: f32,
-    pub g: f32,
-    pub b: f32,
-    pub a: f32,
-}
-impl Color {
-    pub fn new(r: f32, g: f32, b: f32, a: f32) -> Self {
-        Color { r, g, b, a }
-    }
-}
-impl Display for Color {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "[{}, {}, {}, {}]",
-            (self.r * 255.0).round() as u32,
-            (self.g * 255.0).round() as u32,
-            (self.b * 255.0).round() as u32,
-            (self.a * 255.0).round() as u32
-        )
-    }
+pub type Color = Vec4;
+fn format_color(c: &Color) -> String {
+    format!(
+        "[{}, {}, {}, {}]",
+        (c.x * 255.0).round() as u32,
+        (c.y * 255.0).round() as u32,
+        (c.z * 255.0).round() as u32,
+        (c.w * 255.0).round() as u32
+    )
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -98,7 +75,7 @@ impl Display for Move {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Move::PCut { ref block, point } => {
-                write!(f, "cut {block} {point}")
+                write!(f, "cut {} {}", block, format_point(point))
             }
             Move::LCut {
                 ref block,
@@ -108,7 +85,7 @@ impl Display for Move {
                 write!(f, "cut {block} {orientation} {line_number}")
             }
             Move::Color { ref block, color } => {
-                write!(f, "color {block} {color}")
+                write!(f, "color {} {}", block, format_color(color))
             }
             Move::Swap { ref a, ref b } => {
                 write!(f, "color {a} {b}")
