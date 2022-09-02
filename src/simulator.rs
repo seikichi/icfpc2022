@@ -1,8 +1,9 @@
-use crate::image;
-use crate::isl;
-use std::collection::HashMap;
+use std::collections::HashMap;
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+use crate::image::*;
+use crate::isl::*;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Shape {
     pub p: Point,
     pub size: Point,
@@ -12,7 +13,7 @@ impl Shape {
         Shape { p, size }
     }
 }
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SimpleBlock {
     pub shape: Shape,
     pub color: Color,
@@ -23,71 +24,73 @@ impl SimpleBlock {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct State {
-    pub blocks: HashMap<Block, SimpleBlock>,
+    pub blocks: HashMap<BlockId, SimpleBlock>,
 }
-impl Simulator {
-    pub fn simulate(&mut self, state: &State, mv: &Move) -> Option<()> {
-        match mv {
-            Move::PCut { ref block, point } => {
-                let simple_block = self.blocks.get(block)?;
-                if point.x >= simple_block.size.x || point.y >= simple_block.size.y {
-                    return None;
-                }
-                let dx = [0, point.x, point.x, 0];
-                let dy = [0, 0, point.y, point.y];
-                let nw = [
-                    point.x,
-                    simple_block.size.x - point.x,
-                    simple_block.size.x - point.x,
-                    point.x,
-                ];
-                let nh = [
-                    point.y,
-                    point.y,
-                    simple_block.size.y - point.y,
-                    simple_block.size.y - point.y,
-                ];
-                for i in 0..4 {
-                    let nx = simple_block.p.x + dx[i];
-                    let ny = simple_block.p.y + dy[i];
-                    let mut next_id = block.clone();
-                    next_id.push(i);
-                    let next_simple_block = SimpleBlock::new(
-                        Shape::new(Point::new(nx, ny), Point::new(nw[i], nh[i])),
-                        simple_block.color,
-                    );
-                    self.blocks.insert(next_id, next_simple_block);
-                }
-                self.blocks.remove(block);
+
+pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
+    match mv {
+        Move::PCut { ref block_id, point } => {
+            let simple_block = state.blocks.get(block_id)?.clone();
+            let p = simple_block.shape.p;
+            if point.x >= simple_block.shape.size.x || point.y >= simple_block.shape.size.y {
+                return None;
             }
-            Move::LCut {
-                ref block,
-                orientation,
-                line_number,
-            } => {
-                let simple_block = self.blocks.get(block)?;
-                match orientation {
-                    Orientation::Vertical => {}
-                    Orientation::Horizontal => {}
-                }
-                if point.x >= simple_block.size.x || point.y >= simple_block.size.y {
-                    return None;
-                }
-                // TODO
-                self.blocks.remove(block);
+            let dx = [0, point.x, point.x, 0];
+            let dy = [0, 0, point.y, point.y];
+            let nw = [
+                point.x,
+                simple_block.shape.size.x - point.x,
+                simple_block.shape.size.x - point.x,
+                point.x,
+            ];
+            let nh = [
+                point.y,
+                point.y,
+                simple_block.shape.size.y - point.y,
+                simple_block.shape.size.y - point.y,
+            ];
+            for i in 0..4 {
+                let nx = p.x + dx[i];
+                let ny = p.y + dy[i];
+                let mut next_id = block_id.clone();
+                next_id.0.push(i as u32);
+                let next_simple_block = SimpleBlock::new(
+                    Shape::new(Point::new(nx, ny), Point::new(nw[i], nh[i])),
+                    simple_block.color,
+                );
+                state.blocks.insert(next_id, next_simple_block);
             }
-            Move::Color { ref block, color } => {
-                unimplmented!()
-            }
-            Move::Swap { ref a, ref b } => {
-                unimplmented!()
-            }
-            Move::Merge { ref a, ref b } => {
-                unimplmented!()
-            }
+            state.blocks.remove(block_id);
         }
-        return Some();
+        Move::LCut {
+            ref block_id,
+            orientation,
+            line_number,
+        } => {
+            let simple_block = state.blocks.get(block_id)?;
+            match orientation {
+                Orientation::Vertical => {}
+                Orientation::Horizontal => {}
+            }
+            /*
+            if point.x >= simple_block.shape.size.x || point.y >= simple_block.shape.size.y {
+                return None;
+            }
+            */
+            // TODO
+            state.blocks.remove(block_id);
+        }
+        Move::Color { ref block_id, color } => {
+            unimplemented!()
+        }
+        Move::Swap { ref a, ref b } => {
+            unimplemented!()
+        }
+        Move::Merge { ref a, ref b } => {
+            unimplemented!()
+        }
     }
+    Some(())
 }

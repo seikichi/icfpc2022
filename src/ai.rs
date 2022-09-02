@@ -22,7 +22,7 @@ impl OneColorAI {
         let area = (image.0.len() * image.0[0].len()) as f32;
         let color = sum / area;
 
-        isl::Program(vec![isl::Move::Color { block: isl::Block(vec![0]), color }])
+        isl::Program(vec![isl::Move::Color { block_id: isl::BlockId(vec![0]), color }])
     }
 }
 

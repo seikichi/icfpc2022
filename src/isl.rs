@@ -2,9 +2,9 @@ use std::fmt::Display;
 
 use glam::{IVec2, Vec4};
 
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Block(pub Vec<u32>);
-impl Display for Block {
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+pub struct BlockId(pub Vec<u32>);
+impl Display for BlockId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut ret = String::new();
         for i in 0..self.0.len() {
@@ -50,45 +50,45 @@ impl Display for Orientation {
 #[derive(Debug, Clone, PartialEq)]
 pub enum Move {
     PCut {
-        block: Block,
+        block_id: BlockId,
         point: Point,
     },
     LCut {
-        block: Block,
+        block_id: BlockId,
         orientation: Orientation,
         line_number: i32,
     },
     Color {
-        block: Block,
+        block_id: BlockId,
         color: Color,
     },
     Swap {
-        a: Block,
-        b: Block,
+        a: BlockId,
+        b: BlockId,
     },
     Merge {
-        a: Block,
-        b: Block,
+        a: BlockId,
+        b: BlockId,
     },
 }
 impl Display for Move {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            Move::PCut { ref block, point } => {
-                write!(f, "cut {} {}", block, format_point(point))
+            Move::PCut { ref block_id, point } => {
+                write!(f, "cut {} {}", block_id, format_point(point))
             }
             Move::LCut {
-                ref block,
+                ref block_id,
                 orientation,
                 line_number,
             } => {
-                write!(f, "cut {block} {orientation} {line_number}")
+                write!(f, "cut {block_id} {orientation} {line_number}")
             }
-            Move::Color { ref block, color } => {
-                write!(f, "color {} {}", block, format_color(color))
+            Move::Color { ref block_id, color } => {
+                write!(f, "color {} {}", block_id, format_color(color))
             }
             Move::Swap { ref a, ref b } => {
-                write!(f, "color {a} {b}")
+                write!(f, "swap {a} {b}")
             }
             Move::Merge { ref a, ref b } => {
                 write!(f, "merge {a} {b}")
