@@ -28,12 +28,23 @@ pub async fn save(
     client
         .put_item()
         .table_name(table_name)
-        .item("PK", AttributeValue::S(pk))
+        .item("PK", AttributeValue::S(pk.clone()))
         .item("SK", AttributeValue::S(sk))
         .item("GSI1PK", AttributeValue::S(gsi1pk))
         .item("GSI1SK", AttributeValue::N(gsi1sk))
         .item("AI", AttributeValue::S(ai.to_string()))
         .item("Commit", AttributeValue::S(commit.to_string()))
+        .send()
+        .await?;
+
+    // 親のレコードにもスコアを追加しておく
+    client
+        .update_item()
+        .table_name(table_name)
+        .key("PK", AttributeValue::S(pk.clone()))
+        .key("SK", AttributeValue::S(pk))
+        .update_expression(format!("SET S#{} = :score", problem_id))
+        .expression_attribute_values(":score", AttributeValue::N(score.to_string()))
         .send()
         .await?;
 
