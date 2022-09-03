@@ -9,7 +9,7 @@ pub struct MergeAI {
 }
 
 impl HeadAI for MergeAI {
-    fn solve(&mut self, _image: &image::Image) -> Program {
+    fn solve(&mut self, _image: &image::Image, _initial_state: &simulator::State) -> Program {
         let mut ret = Program(vec![]);
         while self.active_block_num() > 1 {
             let mut target = None;

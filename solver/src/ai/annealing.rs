@@ -4,7 +4,7 @@ use crate::{
     ai::ChainedAI,
     image::Image,
     isl::{Move, Orientation, Program},
-    simulator::{calc_score, simulate_all, ProgramExecError},
+    simulator::{calc_score, simulate_all, ProgramExecError, State},
 };
 use glam::IVec2;
 use rand::prelude::*;
@@ -14,10 +14,10 @@ pub struct AnnealingAI {
 }
 
 impl ChainedAI for AnnealingAI {
-    fn solve(&mut self, image: &Image, initial_program: &Program) -> Program {
+    fn solve(&mut self, image: &Image, initial_state: &State, initial_program: &Program) -> Program {
         let mut solution = initial_program.clone();
         let mut rng = SmallRng::from_entropy();
-        let mut current_score = self.calc_ann_score(&solution, image).unwrap();
+        let mut current_score = self.calc_ann_score(&solution, image, initial_state).unwrap();
         let start_at = Instant::now();
 
         let mut best_solution = solution.clone();
@@ -57,7 +57,7 @@ impl ChainedAI for AnnealingAI {
             }
             let i_chosen = candidates[rng.gen::<usize>() % candidates.len()];
             let old = solution.0[i_chosen].clone();
-            let state = simulate_all(&solution, image).unwrap();
+            let state = simulate_all(&solution, &initial_state).unwrap();
             let delta = 5; // TODO
             let modified = match old {
                 Move::LCut {
@@ -136,7 +136,7 @@ impl ChainedAI for AnnealingAI {
             };
             solution.0[i_chosen] = modified;
 
-            let new_score = match self.calc_ann_score(&mut solution, image) {
+            let new_score = match self.calc_ann_score(&mut solution, image, initial_state) {
                 Ok(x) => x,
                 Err(_) => {
                     eprintln!("failed to move.. rollback.");
@@ -173,7 +173,7 @@ impl ChainedAI for AnnealingAI {
     }
 }
 impl AnnealingAI {
-    fn calc_ann_score(&self, program: &Program, image: &Image) -> Result<f64, ProgramExecError> {
-        Ok(calc_score(program, image)? as f64)
+    fn calc_ann_score(&self, program: &Program, image: &Image, state: &State) -> Result<f64, ProgramExecError> {
+        Ok(calc_score(program, image, state)? as f64)
     }
 }

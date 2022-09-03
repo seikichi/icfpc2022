@@ -53,8 +53,8 @@ const Home: NextPage<Props> = ({ runs }) => {
                     </Link>
                   </TableCell>
                   <TableCell>{r.args}</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
+                  <TableCell>{r.problems}</TableCell>
+                  <TableCell>{r.score}</TableCell>
                 </TableRow>
               );
             })}

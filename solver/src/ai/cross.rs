@@ -1,6 +1,7 @@
 use crate::ai::HeadAI;
 use crate::image;
 use crate::isl;
+use crate::simulator;
 use std::collections::HashMap;
 
 pub struct CrossAI {
@@ -91,7 +92,7 @@ impl CrossAI {
 }
 
 impl HeadAI for CrossAI {
-    fn solve(&mut self, image: &image::Image) -> isl::Program {
+    fn solve(&mut self, image: &image::Image, _initial_state: &simulator::State) -> isl::Program {
         // 再帰的 に pcut してく
         // 各マスの色に何を塗るかを集計して
         // 分割しなくていいならやめる (-> 再帰でなんかそれっぽく書く)

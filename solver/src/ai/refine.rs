@@ -4,6 +4,7 @@ use crate::isl::*;
 use crate::simulator;
 use crate::simulator::calc_score;
 use crate::simulator::simulate_partial;
+use crate::simulator::State;
 use rand::Rng;
 
 pub struct RefineAi {
@@ -11,11 +12,11 @@ pub struct RefineAi {
 }
 
 impl ai::ChainedAI for RefineAi {
-    fn solve(&mut self, image: &image::Image, initial_program: &Program) -> Program {
+    fn solve(&mut self, image: &image::Image, initial_state: &State, initial_program: &Program) -> Program {
         // TODO seed_from_u64
         let mut rng = rand::thread_rng();
         let mut best_program = initial_program.clone();
-        let mut best_score = simulator::calc_score(initial_program, image).unwrap();
+        let mut best_score = simulator::calc_score(initial_program, image, initial_state).unwrap();
         let mut prev_program = initial_program.clone();
         for iter in 0..self.n_iters {
             let mut next_program = prev_program.clone();
@@ -103,7 +104,7 @@ impl ai::ChainedAI for RefineAi {
                     continue;
                 }
             }
-            if let Ok(score) = calc_score(&next_program, image) {
+            if let Ok(score) = calc_score(&next_program, image, &initial_state) {
                 if score < best_score {
                     println!(
                         "iter: {:3}, score: {:7}, move: {}",

@@ -4,6 +4,8 @@ export interface Run {
   id: string;
   time: number;
   args: string;
+  problems: number;
+  score: number;
 }
 
 export interface RunResult {
@@ -84,10 +86,21 @@ export async function fetchRunList(): Promise<Run[]> {
 
   const results: Run[] = [];
   for (const item of items) {
+    let problems = 0;
+    let score = 0;
+    for (const [key, value] of Object.entries(item)) {
+      if (key.startsWith("S#")) {
+        problems++;
+        score += parseInt(value["N"] as any, 10);
+      }
+    }
+
     results.push({
       id: item["PK"]["S"]?.split("#")[1]!,
-      time: parseInt(item["GSI1SK"]["N"]!),
+      time: parseInt(item["GSI1SK"]["N"]!, 10),
       args: item["Args"]["S"]!,
+      problems,
+      score,
     });
   }
 
