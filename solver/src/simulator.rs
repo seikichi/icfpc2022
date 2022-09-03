@@ -320,6 +320,23 @@ pub fn calc_partial_state_similarity(
     return (similarity * 0.005).round() as i64;
 }
 
+// 単色で塗りつぶされている場合のsimilarityを計算する
+pub fn calc_partial_one_color_similarity(
+    p: Point,
+    size: Point,
+    color: Color,
+    target_image: &Image,
+) -> i64 {
+    let mut similarity: f64 = 0.0;
+    for y in p.y..std::cmp::min(p.y + size.y, target_image.height() as i32) {
+        for x in p.x..std::cmp::min(p.x + size.x, target_image.width() as i32) {
+            let d = color - target_image.0[y as usize][x as usize];
+            similarity += (d * 255.0).round().length() as f64;
+        }
+    }
+    return (similarity * 0.005).round() as i64;
+}
+
 #[allow(dead_code)]
 pub fn calc_score(program: &Program, target_image: &Image) -> Result<i64, ProgramExecError> {
     let h = target_image.height();
