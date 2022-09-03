@@ -8,7 +8,7 @@ interface Props {
 }
 
 export async function getStaticPaths() {
-    const dir = path.join(process.cwd(), '..', 'problems')
+    const dir = path.join(process.cwd(), 'public', 'problems')
     const files = await fs.readdir(dir)
 
     return {
