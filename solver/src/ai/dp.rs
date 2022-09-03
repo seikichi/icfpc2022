@@ -88,6 +88,7 @@ impl DpAI {
             let mut nprogram = Program(vec![]);
             let mut ncost = 0;
             if c != color_id {
+                // Color
                 nprogram.0.push(Move::Color {
                     block_id: BlockId::new(&vec![]),
                     color: self.sampled_color[c],
@@ -113,6 +114,7 @@ impl DpAI {
                     ret.1 = nprogram.clone();
                 }
             }
+            // PCut
             for lw in 1..w {
                 for lh in 1..h {
                     nprogram.0.push(Move::PCut {
@@ -121,7 +123,13 @@ impl DpAI {
                     });
                     let dx = [0, lw, lw, 0];
                     let dy = [0, 0, lh, lh];
-                    let mut nlcost = 0;
+                    let mut nlcost = simulator::move_cost(
+                        &state,
+                        &nprogram.0[0],
+                        self.image.width(),
+                        self.image.height(),
+                    )
+                    .unwrap();
                     let mut nlprogram = vec![];
                     for i in 0..4 {
                         let nx = x + dx[i];
@@ -143,13 +151,77 @@ impl DpAI {
                     nprogram.0.pop().unwrap();
                 }
             }
-            // // TODO LCut
-            // for lw in 1..w {
-            //     //
-            // }
-            // for lh in 1..h {
-            //     //
-            // }
+            // LCut
+            for lw in 1..w {
+                nprogram.0.push(Move::LCut {
+                    block_id: BlockId::new(&vec![]),
+                    orientation: Orientation::Vertical,
+                    line_number: self.convert_point(x + lw, y).x,
+                });
+                let dx = [0, lw];
+                let dy = [0, 0];
+                let mut nlcost = simulator::move_cost(
+                    &state,
+                    &nprogram.0[0],
+                    self.image.width(),
+                    self.image.height(),
+                )
+                .unwrap();
+                let mut nlprogram = vec![];
+                for i in 0..2 {
+                    let nx = x + dx[i];
+                    let ny = y + dy[i];
+                    let nw = [lw, w - lw][i];
+                    let nh = [h, h][i];
+                    let nret = self.calc(nx, ny, nw, nh, c);
+                    nlcost += nret.0;
+                    nlprogram.push(nret.1);
+                }
+                if ncost + nlcost < ret.0 {
+                    ret.0 = ncost + nlcost;
+                    // assert!(ncost + nlcost > 100);
+                    ret.1 = nprogram.clone();
+                    ret.1
+                         .0
+                        .append(&mut self.renumber_block_id(&mut nlprogram).0);
+                }
+                nprogram.0.pop().unwrap();
+            }
+            for lh in 1..h {
+                nprogram.0.push(Move::LCut {
+                    block_id: BlockId::new(&vec![]),
+                    orientation: Orientation::Horizontal,
+                    line_number: self.convert_point(x, y + lh).y,
+                });
+                let dx = [0, 0];
+                let dy = [0, lh];
+                let mut nlcost = simulator::move_cost(
+                    &state,
+                    &nprogram.0[0],
+                    self.image.width(),
+                    self.image.height(),
+                )
+                .unwrap();
+                let mut nlprogram = vec![];
+                for i in 0..2 {
+                    let nx = x + dx[i];
+                    let ny = y + dy[i];
+                    let nw = [w, w][i];
+                    let nh = [lh, h - lh][i];
+                    let nret = self.calc(nx, ny, nw, nh, c);
+                    nlcost += nret.0;
+                    nlprogram.push(nret.1);
+                }
+                if ncost + nlcost < ret.0 {
+                    ret.0 = ncost + nlcost;
+                    // assert!(ncost + nlcost > 100);
+                    ret.1 = nprogram.clone();
+                    ret.1
+                         .0
+                        .append(&mut self.renumber_block_id(&mut nlprogram).0);
+                }
+                nprogram.0.pop().unwrap();
+            }
         }
         self.memo[x][y][w][h][color_id] = Some(ret.clone());
         // println!(

@@ -47,22 +47,31 @@ impl ai::ChainedAI for RefineAi {
                         } else {
                             continue;
                         }
-                    } else {
-                        // // PCut -> LCut and remove all child
-                        // let (orientation, line_number) = if rng.gen_range(0..2) == 0 {
-                        //     (Orientation::Vertical, point.x)
-                        // } else {
-                        //     (Orientation::Horizontal, point.y)
-                        // };
                     }
                 }
                 Move::LCut {
-                    block_id: _,
-                    orientation: _,
-                    line_number: _,
+                    ref block_id,
+                    orientation,
+                    line_number,
                 } => {
                     // TODO
-                    continue;
+                    let r = rng.gen_range(0..2);
+                    if r == 0 {
+                        // change LCut position
+                        let d = rng.gen_range(-5..=5);
+                        next_program.0[t] = Move::LCut {
+                            block_id: block_id.clone(),
+                            orientation,
+                            line_number: line_number + d,
+                        };
+                    } else {
+                        next_program.0.remove(t);
+                        if let Some(result) = Self::remove_all_child(&next_program, block_id) {
+                            next_program = result;
+                        } else {
+                            continue;
+                        }
+                    }
                 }
                 Move::Color {
                     ref block_id,
