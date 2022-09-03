@@ -143,10 +143,14 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             simple_block.color = *color;
         }
         Move::Swap { ref a, ref b } => {
-            let block1 = state.blocks.get(a)?.clone();
-            let block2 = state.blocks.get(b)?.clone();
-            state.blocks.insert(a.clone(), block2);
-            state.blocks.insert(b.clone(), block1);
+            let mut block1 = state.blocks.get_mut(a)?.clone();
+            let mut block2 = state.blocks.get_mut(b)?.clone();
+            if block1.size != block2.size {
+                return None;
+            }
+            std::mem::swap(&mut block1.p, &mut block2.p);
+            state.blocks.insert(a.clone(), block1);
+            state.blocks.insert(b.clone(), block2);
         }
         Move::Merge {
             a: ref _a,
