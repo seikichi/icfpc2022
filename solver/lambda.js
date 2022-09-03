@@ -10,6 +10,7 @@ exports.handler = async function (event, context) {
   child_process.execSync(command, {
     env: {
       ...event.env,
+      ...process.env,
       RUST_BACKTRACE: "1",
       COMMIT: commit,
     },
