@@ -40,6 +40,12 @@ struct Opt {
 
     #[structopt(long = "annealing-seconds", default_value = "10")]
     annealing_seconds: u64,
+
+    #[structopt(long = "dp-divide-num", default_value = "8")]
+    dp_divide_num: usize,
+
+    #[structopt(long = "dp-color-num", default_value = "10")]
+    dp_color_num: usize,
 }
 
 fn parse_ai_string(
@@ -51,7 +57,7 @@ fn parse_ai_string(
         "OneColor" => Box::new(ai::OneColorAI {}),
         "Grid" => Box::new(ai::GridAI { rows: 4, cols: 4 }),
         "Cross" => Box::new(ai::CrossAI { size: 3 }),
-        "DP" => Box::new(ai::DpAI::new(8, 10)),
+        "DP" => Box::new(ai::DpAI::new(opt.dp_divide_num, opt.dp_color_num)),
         "ChangeColor" => Box::new(ai::ChangeColorAI {}),
         x => bail!("'{x}' is not a HeadAI"),
     };
