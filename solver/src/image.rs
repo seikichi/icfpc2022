@@ -113,3 +113,57 @@ pub fn open<P: AsRef<Path>>(path: P) -> anyhow::Result<Image> {
 
     Ok(result)
 }
+
+// k-means を用いて画像の代表色を求める
+pub fn k_means_color_sampling(
+    image: &Image,
+    n_colors: usize,
+    n_iter: usize,
+    rng: &mut impl rand::Rng,
+) -> Vec<Color> {
+    let mut initial_samples: Vec<Color> = vec![];
+    'outer: for _i in 0..1000000 {
+        // 近い色は避けてサンプルの色を何個か取得する
+        let x = rng.gen_range(0..image.width());
+        let y = rng.gen_range(0..image.height());
+        let c = image.0[y][x];
+        for &pc in initial_samples.iter() {
+            if ((pc - c) * 255.0).length() < 30.0 {
+                continue 'outer;
+            }
+        }
+        initial_samples.push(c);
+        if initial_samples.len() == n_colors {
+            break;
+        }
+    }
+
+    // k-means
+    let mut samples = initial_samples;
+    for _i in 0..n_iter {
+        let mut sum = vec![Color::ZERO; samples.len()];
+        let mut count = vec![0; samples.len()];
+
+        for row in &image.0 {
+            for pixel in row {
+                let mut min_diff = 1000000.0;
+                let mut best_cluster = 0;
+                for (i_cluster, color) in samples.iter().enumerate() {
+                    let diff = (*pixel - *color).length();
+                    if diff < min_diff {
+                        min_diff = diff;
+                        best_cluster = i_cluster;
+                    }
+                }
+                sum[best_cluster] += *pixel;
+                count[best_cluster] += 1;
+            }
+        }
+
+        for i in 0..samples.len() {
+            samples[i] = sum[i] / (count[i] as f32);
+        }
+    }
+
+    samples
+}

@@ -21,11 +21,56 @@ export interface RunResult {
   }[];
 }
 
-export async function fetchRun(id: string): Promise<RunResult> {
-  const client = new DynamoDBClient({});
+export interface Solution {
+  runId: string;
+  commit: string;
+  problemId: number;
+  score: number;
+  ai: string;
+}
+
+// .env に書け
+const region = "ap-northeast-1";
+const TableName = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
+
+export async function fetchSolutionList(id: string): Promise<Solution[]> {
+  const client = new DynamoDBClient({ region });
   const { Items: items } = await client.send(
     new QueryCommand({
-      TableName: "InfraStack-TableCD117FA1-1NAQ40LMS0E1G",
+      TableName,
+      IndexName: "GSI1",
+      KeyConditionExpression: "GSI1PK = :pk",
+      ExpressionAttributeValues: {
+        ":pk": { S: `P#${id}` },
+      },
+      ScanIndexForward: true,
+    })
+  );
+  if (!items) {
+    return [];
+  }
+
+  const results: Solution[] = [];
+  for (const item of items) {
+    const pk = item["PK"]["S"]!;
+    const sk = item["SK"]["S"]!;
+
+    const runId = pk.split("#")[1];
+    const commit = item["Commit"]["S"]!;
+    const ai = item["AI"]["S"]!;
+    const problemId = parseInt(sk.split("#")[1], 10);
+    const score = parseInt(item["GSI1SK"]["N"]!, 10);
+
+    results.push({ runId, commit, problemId, score, ai });
+  }
+  return results;
+}
+
+export async function fetchRun(id: string): Promise<RunResult> {
+  const client = new DynamoDBClient({ region });
+  const { Items: items } = await client.send(
+    new QueryCommand({
+      TableName,
       KeyConditionExpression: "PK = :pk",
       ExpressionAttributeValues: {
         ":pk": { S: `R#${id}` },
@@ -67,10 +112,10 @@ export async function fetchRun(id: string): Promise<RunResult> {
 }
 
 export async function fetchRunList(): Promise<Run[]> {
-  const client = new DynamoDBClient({});
+  const client = new DynamoDBClient({ region });
   const { Items: items } = await client.send(
     new QueryCommand({
-      TableName: "InfraStack-TableCD117FA1-1NAQ40LMS0E1G",
+      TableName,
       IndexName: "GSI1",
       KeyConditionExpression: "GSI1PK = :pk",
       ExpressionAttributeValues: {

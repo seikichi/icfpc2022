@@ -7,7 +7,6 @@ use crate::simulator;
 use crate::simulator::SimpleBlock;
 use crate::simulator::State;
 use rand::rngs::ThreadRng;
-use rand::Rng;
 
 pub struct DpAI {
     rng: ThreadRng,
@@ -23,26 +22,9 @@ impl HeadAI for DpAI {
         // color sampling
         self.image = image.clone();
         self.sampled_color.push(Color::ONE);
-        for _i in 0..1000000 {
-            // 近い色は避けてサンプルの色を何個か取得する
-            let x = self.rng.gen_range(0..self.image.width());
-            let y = self.rng.gen_range(0..self.image.height());
-            let c = self.image.0[y][x];
-            let mut ng = false;
-            for &pc in self.sampled_color.iter() {
-                if ((pc - c) * 255.0).length() < 30.0 {
-                    ng = true;
-                    break;
-                }
-            }
-            if ng {
-                continue;
-            }
-            self.sampled_color.push(c);
-            if self.sampled_color.len() == self.sample_color_num {
-                break;
-            }
-        }
+        self.sampled_color =
+            image::k_means_color_sampling(image, self.sample_color_num, 50, &mut self.rng);
+
         // dp
         let d = self.memo.len();
         let (_score, program) = self.calc(0, 0, d, d, 0);
