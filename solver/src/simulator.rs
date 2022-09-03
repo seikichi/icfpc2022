@@ -8,10 +8,17 @@ use crate::isl::*;
 pub struct ProgramExecError {
     line_number: usize,
     mv: Move,
+    block: Option<SimpleBlock>,
 }
 
-pub fn program_exec_error(line_number: usize, mv: Move) -> ProgramExecError {
-    ProgramExecError { line_number, mv }
+pub fn program_exec_error(line_number: usize, mv: Move, state: &State) -> ProgramExecError {
+    let block = match mv {
+        Move::LCut { ref block_id, .. } => state.blocks.get(block_id).cloned(),
+        Move::PCut { ref block_id, .. } => state.blocks.get(block_id).cloned(),
+        Move::Color { ref block_id, .. } => state.blocks.get(block_id).cloned(),
+        _ => None,
+    };
+    ProgramExecError { line_number, mv, block }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -233,7 +240,7 @@ pub fn simulate_all(program: &Program, img: &Image) -> Result<State, ProgramExec
 pub fn simulate_partial(state: &mut State, program: &[Move]) -> Result<(), ProgramExecError> {
     let mut line_number = 1;
     for mv in program {
-        simulate(state, mv).ok_or_else(|| program_exec_error(line_number, mv.clone()))?;
+        simulate(state, mv).ok_or_else(|| program_exec_error(line_number, mv.clone(), state))?;
         line_number += 1;
     }
     Ok(())
@@ -312,8 +319,8 @@ pub fn calc_score(program: &Program, target_image: &Image) -> Result<i64, Progra
     for line_number in 0..program.0.len() {
         let mv = &program.0[line_number];
         cost += move_cost(&state, &mv, w, h)
-            .ok_or_else(|| program_exec_error(line_number + 1, mv.clone()))?;
-        simulate(&mut state, mv).ok_or_else(|| program_exec_error(line_number + 1, mv.clone()))?;
+            .ok_or_else(|| program_exec_error(line_number + 1, mv.clone(), &state))?;
+        simulate(&mut state, mv).ok_or_else(|| program_exec_error(line_number + 1, mv.clone(), &state))?;
     }
     cost += calc_state_similarity(&state, target_image);
     Ok(cost)

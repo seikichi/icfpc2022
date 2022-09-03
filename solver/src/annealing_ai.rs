@@ -4,7 +4,7 @@ use crate::{
     ai::ChainedAI,
     image::Image,
     isl::{Move, Orientation, Program},
-    simulator::{calc_score, simulate_all},
+    simulator::{calc_score, simulate_all, ProgramExecError},
 };
 use glam::IVec2;
 use rand::prelude::*;
@@ -15,14 +15,14 @@ impl ChainedAI for AnnealingAI {
     fn solve(&mut self, image: &Image, initial_program: &Program) -> Program {
         let mut solution = initial_program.clone();
         let mut rng = SmallRng::from_entropy();
-        let mut current_score = self.calc_ann_score(&solution, image);
+        let mut current_score = self.calc_ann_score(&solution, image).unwrap();
         let start_at = Instant::now();
         let time_limit = Duration::from_secs(10);
 
         let mut best_solution = solution.clone();
         let mut best_score = current_score;
 
-        let initial_temperature = 1000.0;
+        let initial_temperature = 100.0;
         let mut temperature = initial_temperature;
 
         let mut iter = 0;
@@ -57,6 +57,7 @@ impl ChainedAI for AnnealingAI {
             let i_chosen = candidates[rng.gen::<usize>() % candidates.len()];
             let old = solution.0[i_chosen].clone();
             let state = simulate_all(&solution, image).unwrap();
+            let delta = 5; // TODO
             let modified = match old {
                 Move::LCut {
                     ref block_id,
@@ -74,11 +75,11 @@ impl ChainedAI for AnnealingAI {
                         Orientation::Vertical => block.size.x - 1,
                     };
                     let mut next = None;
-                    if offset + 1 <= max_offset {
-                        next = Some(line_number + 1);
+                    if offset + delta <= max_offset {
+                        next = Some(line_number + delta);
                     }
-                    if offset - 1 >= 0 && (next.is_none() || rng.gen::<f64>() < 0.5) {
-                        next = Some(line_number - 1);
+                    if offset - delta >= 0 && (next.is_none() || rng.gen::<f64>() < 0.5) {
+                        next = Some(line_number - delta);
                     }
                     if next.is_none() {
                         // 動かせない
@@ -101,11 +102,11 @@ impl ChainedAI for AnnealingAI {
                     let mut n_candidates = 0;
                     let mut next = None;
                     for i in 0..8 {
-                        let next_p = point + IVec2::new(dx[i], dy[i]);
-                        if next_p.x < block.p.x
-                            || next_p.x > block.p.x + block.size.x
-                            || next_p.y < block.p.y
-                            || next_p.y > block.p.y + block.size.y
+                        let next_p = point + IVec2::new(dx[i], dy[i]) * delta;
+                        if next_p.x <= block.p.x
+                            || next_p.x >= block.p.x + block.size.x
+                            || next_p.y <= block.p.y
+                            || next_p.y >= block.p.y + block.size.y
                         {
                             continue;
                         }
@@ -128,7 +129,14 @@ impl ChainedAI for AnnealingAI {
             };
             solution.0[i_chosen] = modified;
 
-            let new_score = self.calc_ann_score(&mut solution, image);
+            let new_score = match self.calc_ann_score(&mut solution, image) {
+                Ok(x) => x,
+                Err(e) => {
+                    eprintln!("failed to move.. rollback.");
+                    solution.0[i_chosen] = old;
+                    continue;
+                }
+            };
             eprintln!("new_score = {new_score}");
 
             // 新しい解を受理するか決める
@@ -158,7 +166,7 @@ impl ChainedAI for AnnealingAI {
     }
 }
 impl AnnealingAI {
-    fn calc_ann_score(&self, program: &Program, image: &Image) -> f64 {
-        calc_score(program, image).unwrap() as f64
+    fn calc_ann_score(&self, program: &Program, image: &Image) -> Result<f64, ProgramExecError> {
+        Ok(calc_score(program, image)? as f64)
     }
 }
