@@ -12,7 +12,13 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: Update rust
+      run: rustup update
+
     - name: Build
       run: cargo build --verbose
+      working-directory: ./solver
+
     - name: Run tests
       run: cargo test --verbose
+      working-directory: ./solver
