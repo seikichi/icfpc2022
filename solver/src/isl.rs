@@ -171,3 +171,8 @@ impl Display for Program {
         Ok(())
     }
 }
+impl Program {
+    fn len(&self) -> usize {
+        return self.0.len();
+    }
+}

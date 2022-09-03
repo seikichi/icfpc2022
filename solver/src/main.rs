@@ -1,5 +1,6 @@
 mod ai;
 mod db;
+mod dp_ai;
 mod image;
 mod isl;
 mod refine_ai;
