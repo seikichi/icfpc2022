@@ -13,6 +13,7 @@ impl SimpleBlock {
     pub fn new(p: Point, size: glam::IVec2, color: Color) -> Self {
         SimpleBlock { p, size, color }
     }
+    #[allow(dead_code)]
     pub fn rasterize(&self, image: &mut Image) {
         let w = image.width();
         let h = image.height();
@@ -82,6 +83,7 @@ impl State {
     }
 }
 
+#[allow(dead_code)]
 pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
     match mv {
         Move::PCut {
@@ -180,12 +182,16 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             state.blocks.insert(a.clone(), block2);
             state.blocks.insert(b.clone(), block1);
         }
-        Move::Merge { ref a, ref b } => {
+        Move::Merge {
+            a: ref _a,
+            b: ref _b,
+        } => {
             unimplemented!()
         }
     }
     Some(())
 }
+
 pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
     let (base, size) = match mv {
         Move::PCut {
@@ -202,13 +208,17 @@ pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
             color: _,
         } => (5.0, state.blocks.get(block_id)?.size),
         Move::Swap { ref a, b: _ } => (3.0, state.blocks.get(a)?.size),
-        Move::Merge { ref a, ref b } => {
+        Move::Merge {
+            a: ref _a,
+            b: ref _b,
+        } => {
             unimplemented!()
         }
     };
     return Some(base * ((w * h) as f32 / (size.x * size.y) as f32).round());
 }
 
+#[allow(dead_code)]
 fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
     return rasterize_parital_state(
         Point::new(0, 0),
@@ -258,6 +268,7 @@ pub fn calc_partial_state_similarity(
     return similarity * 0.05;
 }
 
+#[allow(dead_code)]
 pub fn calc_score(program: &Program, target_image: &Image) -> Option<f32> {
     let h = target_image.height();
     let w = target_image.width();

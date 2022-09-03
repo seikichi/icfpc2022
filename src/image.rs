@@ -18,15 +18,16 @@ impl Image {
     pub fn new(w: usize, h: usize) -> Self {
         Image(vec![vec![glam::Vec4::ZERO; w as usize]; h as usize])
     }
+    #[allow(dead_code)]
     pub fn save(&self, path: &str) {
         let mut img = RgbaImage::new(self.width() as u32, self.height() as u32);
         for pixel in img.enumerate_pixels_mut() {
             let x = pixel.0 as usize;
-            let y = (self.height() - pixel.1 as usize - 1);
-            let r = ((self.0[y][x].x * 255.0).round() as u8);
-            let g = ((self.0[y][x].y * 255.0).round() as u8);
-            let b = ((self.0[y][x].z * 255.0).round() as u8);
-            let a = ((self.0[y][x].w * 255.0).round() as u8);
+            let y = self.height() - pixel.1 as usize - 1;
+            let r = (self.0[y][x].x * 255.0).round() as u8;
+            let g = (self.0[y][x].y * 255.0).round() as u8;
+            let b = (self.0[y][x].z * 255.0).round() as u8;
+            let a = (self.0[y][x].w * 255.0).round() as u8;
             *pixel.2 = image::Rgba([r, g, b, a]);
         }
         img.save(path).unwrap();
