@@ -2,6 +2,7 @@ mod annealing;
 mod cross;
 mod dp;
 mod grid;
+mod merge;
 mod onecolor;
 mod refine;
 
@@ -9,6 +10,7 @@ pub use annealing::*;
 pub use cross::*;
 pub use dp::*;
 pub use grid::*;
+pub use merge::*;
 pub use onecolor::*;
 pub use refine::*;
 
