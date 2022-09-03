@@ -35,30 +35,26 @@ impl SimpleBlock {
 
 #[cfg(test)]
 mod tests {
-    use glam::IVec2;
     use super::*;
+    use glam::IVec2;
 
     #[test]
     fn test_simple_block_rasterize() {
         let red = Color::new(1.0, 0.0, 0.0, 1.0);
         let white = Color::ZERO;
-        let simple_block = SimpleBlock::new(
-            IVec2::new(1, 2),
-            IVec2::new(5, 3),
-            red,
-        );
+        let simple_block = SimpleBlock::new(IVec2::new(1, 2), IVec2::new(5, 3), red);
 
         let mut image = Image::new(10, 4);
         simple_block.rasterize(&mut image);
 
-        let expected = vec![
-            "..........",
-            "..........",
-            ".xxxxx....",
-            ".xxxxx....",
-        ].into_iter().map(|row|
-            row.chars().map(|c| if c == 'x' { red } else { white }).collect::<Vec<_>>()
-        ).collect::<Vec<_>>();
+        let expected = vec!["..........", "..........", ".xxxxx....", ".xxxxx...."]
+            .into_iter()
+            .map(|row| {
+                row.chars()
+                    .map(|c| if c == 'x' { red } else { white })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
 
         assert_eq!(expected, image.0);
     }
@@ -211,9 +207,19 @@ pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
 }
 
 fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
+    return rasterize_parital_state(
+        Point::new(0, 0),
+        Point::new(w as i32, h as i32),
+        state,
+        w,
+        h,
+    );
+}
+
+fn rasterize_parital_state(p: Point, size: Point, state: &State, w: usize, h: usize) -> Image {
     let mut image = Image::new(w, h);
     for (_, simple_block) in &state.blocks {
-        simple_block.rasterize(&mut image);
+        simple_block.partial_rasterize(p, size, &mut image);
     }
     return image;
 }
@@ -221,11 +227,28 @@ fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
 pub fn calc_state_similarity(state: &State, target_image: &Image) -> f32 {
     let w = target_image.width();
     let h = target_image.height();
-    let current_image = rasterize_state(state, w, h);
+    return calc_partial_state_similarity(
+        Point::new(0, 0),
+        Point::new(w as i32, h as i32),
+        state,
+        target_image,
+    );
+}
+
+pub fn calc_partial_state_similarity(
+    p: Point,
+    size: Point,
+    state: &State,
+    target_image: &Image,
+) -> f32 {
+    let w = target_image.width();
+    let h = target_image.height();
+    let current_image = rasterize_parital_state(p, size, state, w, h);
     let mut similarity = 0.0;
-    for y in 0..h {
-        for x in 0..w {
-            let d = current_image.0[y][x] - target_image.0[y][x];
+    for y in p.y..(p.y + size.y) {
+        for x in p.x..(p.x + size.x) {
+            let d =
+                current_image.0[y as usize][x as usize] - target_image.0[y as usize][x as usize];
             similarity += d.length();
         }
     }
