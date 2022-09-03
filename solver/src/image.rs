@@ -32,8 +32,7 @@ impl Image {
         }
         return sum / (size.y * size.x) as f32;
     }
-    #[allow(dead_code)]
-    pub fn save(&self, path: &str) {
+    pub fn save(&self, path: &str) -> anyhow::Result<()> {
         let mut img = RgbaImage::new(self.width() as u32, self.height() as u32);
         for pixel in img.enumerate_pixels_mut() {
             let x = pixel.0 as usize;
@@ -44,7 +43,8 @@ impl Image {
             let a = (self.0[y][x].w * 255.0).round() as u8;
             *pixel.2 = image::Rgba([r, g, b, a]);
         }
-        img.save(path).unwrap();
+        img.save(path)?;
+        Ok(())
     }
     #[allow(dead_code)]
     pub fn from_string_array(string_array: &[&str]) -> Self {
@@ -95,8 +95,8 @@ impl Display for Image {
     }
 }
 
-pub fn open<P: AsRef<Path>>(path: P) -> Image {
-    let img = image::open(path).unwrap();
+pub fn open<P: AsRef<Path>>(path: P) -> anyhow::Result<Image> {
+    let img = image::open(path)?;
     let (w, h) = img.dimensions();
 
     let mut result = Image::new(w as usize, h as usize);
@@ -111,5 +111,5 @@ pub fn open<P: AsRef<Path>>(path: P) -> Image {
         result.0[y][x].w = (a as f32) / 255.0;
     }
 
-    result
+    Ok(result)
 }

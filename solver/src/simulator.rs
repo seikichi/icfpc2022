@@ -3,6 +3,17 @@ use std::collections::HashMap;
 use crate::image::*;
 use crate::isl::*;
 
+#[derive(Debug, thiserror::Error)]
+#[error("line {line_number}: {mv} is invalid")]
+pub struct ProgramExecError {
+    line_number: usize,
+    mv: Move,
+}
+
+pub fn program_exec_error(line_number: usize, mv: Move) -> ProgramExecError {
+    ProgramExecError { line_number, mv }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SimpleBlock {
     pub p: Point,
@@ -210,23 +221,19 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
     Some(())
 }
 
-pub fn simulate_all(program: &Program, img: &Image) -> Option<State> {
+pub fn simulate_all(program: &Program, img: &Image) -> Result<State, ProgramExecError> {
     let mut state = State::initial_state(img.width() as i32, img.height() as i32);
     simulate_partial(&mut state, &program.0)?;
-    Some(state)
+    Ok(state)
 }
 
-pub fn simulate_partial(state: &mut State, program: &[Move]) -> Option<()> {
+pub fn simulate_partial(state: &mut State, program: &[Move]) -> Result<(), ProgramExecError> {
     let mut line_number = 1;
     for mv in program {
-        let result = simulate(state, mv);
-        if result.is_none() {
-            eprintln!("line {}: {} is invalid", line_number, mv);
-            return None;
-        }
+        simulate(state, mv).ok_or_else(|| program_exec_error(line_number, mv.clone()))?;
         line_number += 1;
     }
-    return Some(());
+    Ok(())
 }
 
 pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<i64> {
@@ -306,22 +313,19 @@ pub fn calc_partial_state_similarity(
 }
 
 #[allow(dead_code)]
-pub fn calc_score(program: &Program, target_image: &Image) -> Option<i64> {
+pub fn calc_score(program: &Program, target_image: &Image) -> Result<i64, ProgramExecError> {
     let h = target_image.height();
     let w = target_image.width();
     let mut state = State::initial_state(w as i32, h as i32);
     let mut cost = 0;
     for line_number in 0..program.0.len() {
         let mv = &program.0[line_number];
-        cost += move_cost(&state, &mv, w, h)?;
-        let result = simulate(&mut state, mv);
-        if result.is_none() {
-            eprintln!("line {}: {} is invalid", line_number, mv);
-            return None;
-        }
+        cost += move_cost(&state, &mv, w, h)
+            .ok_or_else(|| program_exec_error(line_number + 1, mv.clone()))?;
+        simulate(&mut state, mv).ok_or_else(|| program_exec_error(line_number + 1, mv.clone()))?;
     }
     cost += calc_state_similarity(&state, target_image);
-    return Some(cost);
+    Ok(cost)
 }
 
 #[cfg(test)]

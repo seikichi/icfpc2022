@@ -2,9 +2,7 @@ use crate::image;
 use crate::isl::*;
 use crate::simulator;
 use crate::simulator::calc_score;
-use crate::simulator::simulate;
 use crate::simulator::simulate_partial;
-use crate::simulator::SimpleBlock;
 use rand::Rng;
 
 pub struct RefineAi {
@@ -95,7 +93,7 @@ impl RefineAi {
                     continue;
                 }
             }
-            if let Some(score) = calc_score(&next_program, image) {
+            if let Ok(score) = calc_score(&next_program, image) {
                 if score < best_score {
                     println!(
                         "iter: {:3}, score: {:7}, move: {}",
