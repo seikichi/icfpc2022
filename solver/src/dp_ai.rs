@@ -26,7 +26,6 @@ impl HeadAI for DpAI {
             let x = self.rng.gen_range(0..self.image.width());
             let y = self.rng.gen_range(0..self.image.height());
             self.sampled_color[i] = self.image.0[y][x];
-            println!("{}", self.sampled_color[i]);
         }
         // dp
         let d = self.memo.len();
@@ -60,7 +59,12 @@ impl DpAI {
         }
         let state = self.make_state(x, y, w, h, color_id);
         let mut ret = (
-            simulator::calc_state_similarity(&state, &self.image),
+            simulator::calc_partial_state_similarity(
+                self.convert_point(x, y),
+                self.convert_point(w, h),
+                &state,
+                &self.image,
+            ),
             Program(vec![]),
         );
         for c in 0..self.sampled_color.len() {
@@ -78,9 +82,16 @@ impl DpAI {
                     self.image.height(),
                 )
                 .unwrap();
-                if ncost < ret.0 {
-                    // assert!(ncost > 100);
-                    ret.0 = ncost;
+                let nstate = self.make_state(x, y, w, h, c);
+                let scost = simulator::calc_partial_state_similarity(
+                    self.convert_point(x, y),
+                    self.convert_point(w, h),
+                    &nstate,
+                    &self.image,
+                );
+                if ncost + scost < ret.0 {
+                    // assert!(ncost + scost > 100);
+                    ret.0 = ncost + scost;
                     ret.1 = nprogram.clone();
                 }
             }
@@ -103,7 +114,7 @@ impl DpAI {
                         nlcost += nret.0;
                         nlprogram.push(nret.1);
                     }
-                    println!("{} {} {}", ret.0, ncost + nlcost, nprogram);
+                    // println!("{} {} {}", ret.0, ncost + nlcost, nprogram);
                     if ncost + nlcost < ret.0 {
                         ret.0 = ncost + nlcost;
                         // assert!(ncost + nlcost > 100);
@@ -124,7 +135,7 @@ impl DpAI {
             // }
         }
         self.memo[x][y][w][h][color_id] = Some(ret.clone());
-        println!("{} {} {} {} {} {} {:?}", x, y, w, h, color_id, ret.0, state);
+        // println!("{} {} {} {} {} {} {:?}", x, y, w, h, color_id, ret.0, state);
         return ret;
     }
 
