@@ -5,7 +5,7 @@ use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_s3 as s3;
 use aws_sdk_s3::types::ByteStream;
 
-async fn save(
+pub async fn save(
     run_id: &str,
     problem_id: u32,
     program: &isl::Program,

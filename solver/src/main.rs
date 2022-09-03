@@ -7,8 +7,8 @@ mod refine_ai;
 mod simulator;
 
 use anyhow::bail;
-use std::path::{Path, PathBuf};
-use std::{ffi::OsStr, fs};
+use std::fs;
+use std::path::PathBuf;
 use structopt::StructOpt;
 
 use crate::ai::{ChainedAI, HeadAI};
@@ -49,7 +49,8 @@ fn parse_ai_string(ai_str: &str) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn
     Ok((head_ai, chained_ais))
 }
 
-fn main() -> anyhow::Result<()> {
+#[tokio::main]
+async fn main() -> anyhow::Result<()> {
     let opt = Opt::from_args();
 
     let (mut head_ai, chained_ais) = parse_ai_string(&opt.ai)?;
@@ -77,12 +78,23 @@ fn main() -> anyhow::Result<()> {
     println!("score: {}", score);
     let state = simulator::simulate_all(&program, &img)?;
     let output_image = simulator::rasterize_state(&state, img.width(), img.height());
-    output_image.save("result.png")?;
 
-    let output_basename = problem_id + ".isl";
-    let output_filename = opt.output_dir.join(output_basename);
-    println!("output to: {}", output_filename.to_string_lossy());
+    let output_filename = opt.output_dir.join(problem_id.clone() + ".isl");
+    println!("output ISL to: {}", output_filename.to_string_lossy());
     fs::write(output_filename, format!("{program}"))?;
+
+    let output_image_filename = opt.output_dir.join(problem_id.clone() + ".png");
+    println!("output PNG to: {}", output_image_filename.to_string_lossy());
+    output_image.save(output_image_filename)?;
+
+    // db::save(
+    //     "482eb33b-b510-4e06-bec9-9222159deaee",
+    //     problem_id,
+    //     &program,
+    //     score,
+    //     "result.png",
+    // )
+    // .await?;
 
     Ok(())
 }

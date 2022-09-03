@@ -32,7 +32,7 @@ impl Image {
         }
         return sum / (size.y * size.x) as f32;
     }
-    pub fn save(&self, path: &str) -> anyhow::Result<()> {
+    pub fn save<P: AsRef<Path>>(&self, path: P) -> anyhow::Result<()> {
         let mut img = RgbaImage::new(self.width() as u32, self.height() as u32);
         for pixel in img.enumerate_pixels_mut() {
             let x = pixel.0 as usize;
