@@ -1,9 +1,8 @@
 mod ai;
 mod db;
-mod dp_ai;
 mod image;
+mod initial_config;
 mod isl;
-mod refine_ai;
 mod simulator;
 
 use anyhow::bail;
@@ -42,13 +41,14 @@ fn parse_ai_string(ai_str: &str) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn
         "OneColor" => Box::new(ai::OneColorAI {}),
         "Grid" => Box::new(ai::GridAI { rows: 4, cols: 4 }),
         "Cross" => Box::new(ai::CrossAI { size: 3 }),
-        "DP" => Box::new(dp_ai::DpAI::new(8, 10)),
+        "DP" => Box::new(ai::DpAI::new(8, 10)),
         x => bail!("'{x}' is not a HeadAI"),
     };
     let mut chained_ais = vec![];
     for name in &parts[1..] {
         let chained_ai: Box<dyn ai::ChainedAI> = match *name {
-            "Refine" => Box::new(refine_ai::RefineAi {}),
+            "Refine" => Box::new(ai::RefineAi {}),
+            "Annealing" => Box::new(ai::AnnealingAI {}),
             x => bail!("'{x}' is not a ChainedAI"),
         };
         chained_ais.push(chained_ai);
@@ -73,8 +73,18 @@ async fn main() -> anyhow::Result<()> {
         .to_string_lossy()
         .to_string();
 
-    let img = image::open(opt.input_path)?;
+    let img = image::open(opt.input_path.clone())?;
     let mut program = head_ai.solve(&img);
+
+    let initial_state = initial_config::load_inistal_state(
+        &opt.input_path
+            .parent()
+            .unwrap()
+            .join(format!("{}.initial.json", problem_id))
+            .to_str()
+            .unwrap(),
+        &img,
+    );
 
     for mut chained_ai in chained_ais {
         program = chained_ai.solve(&img, &program);
