@@ -46,6 +46,7 @@ export class InfraStack extends cdk.Stack {
     const bucket = new s3.Bucket(this, "Bucket", {
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
+    bucket.grantReadWrite(solver);
 
     const oai = new cloudfront.OriginAccessIdentity(this, "OAI");
     bucket.addToResourcePolicy(
