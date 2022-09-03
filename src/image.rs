@@ -35,13 +35,23 @@ impl Image {
         }
         img.save(path).unwrap();
     }
-    pub fn from_string_array(string_array: &[&str], pen_color: Color) -> Self {
-        let white = Color::ONE;
+    #[allow(dead_code)]
+    pub fn from_string_array(string_array: &[&str]) -> Self {
         let v = string_array
             .into_iter()
             .map(|row| {
                 row.chars()
-                    .map(|c| if c == '.' { white } else { pen_color })
+                    .map(|c| {
+                        match c {
+                            '.' => Color::ONE,
+                            '#' => Color::new(0.0, 0.0, 0.0, 1.0),
+                            'r' => Color::new(1.0, 0.0, 0.0, 1.0),
+                            'g' => Color::new(0.0, 1.0, 0.0, 1.0),
+                            'b' => Color::new(0.0, 0.0, 1.0, 1.0),
+                            'z' => Color::ZERO,
+                            _ => Color::new(0.5, 0.5, 0.5, 1.0),
+                        }
+                    })
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();

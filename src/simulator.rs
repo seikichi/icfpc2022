@@ -59,6 +59,7 @@ impl State {
 }
 
 #[allow(dead_code)]
+#[must_use]
 pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
     match mv {
         Move::PCut {
@@ -257,7 +258,7 @@ pub fn calc_score(program: &Program, target_image: &Image) -> Option<f32> {
     let mut cost = 0.0;
     for mv in program.0.iter() {
         cost += move_cost(&state, mv, w, h)?;
-        simulate(&mut state, mv);
+        simulate(&mut state, mv)?;
     }
     cost += calc_state_similarity(&state, target_image);
     return Some(cost);
@@ -274,6 +275,39 @@ mod tests {
     use glam::IVec2;
 
     #[test]
+    fn test_simulate() {
+        let mut state = State::initial_state(5, 3);
+        simulate(&mut state, &Move::PCut {
+            block_id: BlockId(vec![0]),
+            point: Point::new(2, 1),
+        }).unwrap();
+        simulate(&mut state, &Move::Color {
+            block_id: BlockId(vec![0, 0]),
+            color: Color::new(1.0, 0.0, 0.0, 1.0),
+        }).unwrap();
+        simulate(&mut state, &Move::Color {
+            block_id: BlockId(vec![0, 2]),
+            color: Color::new(0.0, 1.0, 0.0, 1.0),
+        }).unwrap();
+        simulate(&mut state, &Move::Color {
+            block_id: BlockId(vec![0, 3]),
+            color: Color::new(0.0, 0.0, 1.0, 1.0),
+        }).unwrap();
+
+        #[rustfmt::skip]
+        let expected = Image::from_string_array(&[
+            "rr...",
+            "bbggg",
+            "bbggg",
+        ]);
+
+        let actual = rasterize_state(&state, 5, 3);
+
+        eprint!("actual:\n{}", actual);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn test_simple_block_rasterize() {
         let red = Color::new(1.0, 0.0, 0.0, 1.0);
         let simple_block = SimpleBlock::new(IVec2::new(1, 2), IVec2::new(5, 3), red);
@@ -285,9 +319,9 @@ mod tests {
         let expected = Image::from_string_array(&[
             "..........",
             "..........",
-            ".xxxxx....",
-            ".xxxxx....",
-        ], red);
+            ".rrrrr....",
+            ".rrrrr....",
+        ]);
 
         //eprintln!("actuall_image:\n{}", image);
 
@@ -305,14 +339,14 @@ mod tests {
                 orientation: Orientation::Vertical,
                 line_number: 2,
             },
-        );
+        ).unwrap();
         simulate(
             &mut state,
             &Move::Color {
                 block_id: BlockId(vec![0, 1]),
                 color: red,
             },
-        );
+        ).unwrap();
         // ..rrr
         // ..rrr
         // ..rrr
@@ -322,7 +356,7 @@ mod tests {
             "..rr.",
             "..r.r",
             ".rrrr",
-        ], red);
+        ]);
 
         //eprintln!("target_image:\n{}", target_image);
         //eprintln!("actuall_image:\n{}", rasterize_state(&state, 5, 3));
@@ -343,7 +377,7 @@ mod tests {
             block_id: BlockId(vec![0]),
             orientation: Orientation::Vertical,
             line_number: 2,
-        });
+        }).unwrap();
         let mv = Move::Color {
             block_id: BlockId(vec![0, 1]),
             color: Color::ZERO,
