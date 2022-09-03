@@ -2,6 +2,7 @@ mod ai;
 mod db;
 mod dp_ai;
 mod image;
+mod initial_config;
 mod isl;
 mod refine_ai;
 mod simulator;
@@ -73,8 +74,18 @@ async fn main() -> anyhow::Result<()> {
         .to_string_lossy()
         .to_string();
 
-    let img = image::open(opt.input_path)?;
+    let img = image::open(opt.input_path.clone())?;
     let mut program = head_ai.solve(&img);
+
+    let initial_state = initial_config::load_inistal_state(
+        &opt.input_path
+            .parent()
+            .unwrap()
+            .join(format!("{}.initial.json", problem_id))
+            .to_str()
+            .unwrap(),
+        &img,
+    );
 
     for mut chained_ai in chained_ais {
         program = chained_ai.solve(&img, &program);
