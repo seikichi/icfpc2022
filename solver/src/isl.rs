@@ -173,7 +173,30 @@ impl Display for Program {
 }
 impl Program {
     #[allow(dead_code)]
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         return self.0.len();
+    }
+    #[allow(dead_code)]
+    pub fn convert_initial_block_id(&mut self, id: u32) {
+        for mv in self.0.iter_mut() {
+            match mv {
+                Move::PCut { block_id, .. } => {
+                    block_id.0[0] = id;
+                }
+                Move::LCut { block_id, .. } => {
+                    block_id.0[0] = id;
+                }
+                Move::Color { block_id, .. } => {
+                    block_id.0[0] = id;
+                }
+                Move::Swap { a, b } => {
+                    a.0[0] = id;
+                    b.0[0] = id;
+                }
+                Move::Merge { a, b } => {
+                    panic!("Can't use Merge")
+                }
+            }
+        }
     }
 }
