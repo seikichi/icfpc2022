@@ -13,6 +13,7 @@ pub struct DpAI {
     sample_color_num: usize,
     sampled_color: Vec<Color>,
     memo: Vec<Vec<Vec<Vec<Vec<Option<(i64, Program)>>>>>>,
+    similality_memo: Vec<Vec<Vec<Option<i64>>>>,
     image: image::Image,
 }
 
@@ -41,11 +42,13 @@ impl DpAI {
             ];
             divide_num
         ];
+        let similality_memo = vec![vec![vec![None; sample_color_num]; divide_num]; divide_num];
         DpAI {
             rng: rand::thread_rng(),
             sample_color_num,
             sampled_color: vec![],
             memo,
+            similality_memo,
             image: image::Image::new(1, 1),
         }
     }
@@ -57,15 +60,7 @@ impl DpAI {
             return ret;
         }
         let state = self.make_state(x, y, w, h, color_id);
-        let mut ret = (
-            simulator::calc_partial_one_color_similarity(
-                self.convert_point(x, y),
-                self.convert_point(w, h),
-                self.sampled_color[color_id],
-                &self.image,
-            ),
-            Program(vec![]),
-        );
+        let mut ret = (self.calc_similality(x, y, w, h, color_id), Program(vec![]));
         for c in 0..self.sampled_color.len() {
             let mut nprogram = Program(vec![]);
             let mut ncost = 0;
@@ -83,12 +78,7 @@ impl DpAI {
                 )
                 .unwrap();
                 // let nstate = self.make_state(x, y, w, h, c);
-                let scost = simulator::calc_partial_one_color_similarity(
-                    self.convert_point(x, y),
-                    self.convert_point(w, h),
-                    self.sampled_color[c],
-                    &self.image,
-                );
+                let scost = self.calc_similality(x, y, w, h, c);
                 if ncost + scost < ret.0 {
                     // assert!(ncost + scost > 100);
                     assert!(nprogram.0.len() == 1);
@@ -213,6 +203,28 @@ impl DpAI {
         return ret;
     }
 
+    fn calc_similality(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i64 {
+        let mut ret = 0;
+        for dx in 0..w {
+            let nx = x + dx;
+            for dy in 0..h {
+                let ny = y + dy;
+                if let Some(s) = self.similality_memo[nx][ny][color_id] {
+                    ret += s;
+                } else {
+                    let s = simulator::calc_partial_one_color_similarity(
+                        self.convert_point(nx, ny),
+                        self.convert_point(1, 1),
+                        self.sampled_color[color_id],
+                        &self.image,
+                    );
+                    self.similality_memo[nx][ny][color_id] = Some(s);
+                    ret += s;
+                }
+            }
+        }
+        return ret;
+    }
     fn make_state(&self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> State {
         let d = self.memo.len();
         let l = x * (self.image.width() / d);
