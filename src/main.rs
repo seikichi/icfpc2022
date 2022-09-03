@@ -29,7 +29,7 @@ fn main() {
     }
     let mut state = simulator::State::initial_state(img.width() as i32, img.height() as i32);
     for mv in program.0.iter() {
-        simulator::simulate(&mut state, mv);
+        simulator::simulate(&mut state, mv).unwrap();
     }
     let _output_image = simulator::rasterize_state(&state, img.width(), img.height());
     // _output_image.save("result.png");
