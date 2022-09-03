@@ -8,10 +8,16 @@ pub struct SimpleBlock {
     pub p: Point,
     pub size: Point,
     pub color: Color,
+    pub active: bool,
 }
 impl SimpleBlock {
     pub fn new(p: Point, size: glam::IVec2, color: Color) -> Self {
-        SimpleBlock { p, size, color }
+        SimpleBlock {
+            p,
+            size,
+            color,
+            active: true,
+        }
     }
     #[allow(dead_code)]
     pub fn rasterize(&self, image: &mut Image) {
@@ -20,6 +26,9 @@ impl SimpleBlock {
         self.partial_rasterize(glam::IVec2::ZERO, Point::new(w as i32, h as i32), image);
     }
     pub fn partial_rasterize(&self, p: Point, size: Point, image: &mut Image) {
+        if !self.active {
+            return;
+        }
         let w = std::cmp::min((p.x + size.x) as usize, image.width());
         let h = std::cmp::min((p.y + size.y) as usize, image.height());
         let t = std::cmp::max(p.y as usize, self.p.y as usize);
@@ -56,7 +65,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             ref block_id,
             point,
         } => {
-            let simple_block = state.blocks.get(block_id)?.clone();
+            let mut simple_block = state.blocks.get(block_id)?.clone();
             let p = simple_block.p;
             if point.x <= 0
                 || point.x >= simple_block.size.x
@@ -91,7 +100,8 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 );
                 state.blocks.insert(next_id, next_simple_block);
             }
-            state.blocks.remove(block_id);
+            simple_block.active = false;
+            state.blocks.insert(block_id.clone(), simple_block);
         }
         Move::LCut {
             ref block_id,
@@ -99,7 +109,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             line_number,
         } => {
             let line_number = *line_number;
-            let simple_block = state.blocks.get(block_id)?.clone();
+            let mut simple_block = state.blocks.get(block_id)?.clone();
             let p = simple_block.p;
             let mut dx = [0, 0];
             let mut dy = [0, 0];
@@ -133,7 +143,8 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 );
                 state.blocks.insert(next_id, next_simple_block);
             }
-            state.blocks.remove(block_id);
+            simple_block.active = false;
+            state.blocks.insert(block_id.clone(), simple_block);
         }
         Move::Color {
             ref block_id,
