@@ -1,6 +1,7 @@
 mod ai;
 mod image;
 mod isl;
+mod refine_ai;
 mod simulator;
 
 use std::env;
