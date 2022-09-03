@@ -1,6 +1,6 @@
 use crate::image;
 use crate::isl;
-use std::collections::{BinaryHeap, HashMap};
+use std::collections::HashMap;
 
 pub struct OneColorAI {}
 
@@ -14,6 +14,7 @@ pub struct CrossAI {
 }
 
 impl OneColorAI {
+    #[allow(dead_code)]
     pub fn solve(&self, image: &image::Image) -> isl::Program {
         let mut sum = glam::Vec4::ZERO;
 
@@ -33,6 +34,7 @@ impl OneColorAI {
 }
 
 impl GridAI {
+    #[allow(dead_code)]
     pub fn solve(&self, image: &image::Image) -> isl::Program {
         let height = image.height();
         let width = image.width();

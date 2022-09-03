@@ -48,6 +48,7 @@ impl Display for Orientation {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum Move {
     PCut {
         block_id: BlockId,
