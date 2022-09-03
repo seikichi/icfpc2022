@@ -6,8 +6,8 @@ mod refine_ai;
 mod simulator;
 
 use anyhow::bail;
-use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+use std::{ffi::OsStr, fs};
 use structopt::StructOpt;
 
 use crate::ai::{ChainedAI, HeadAI};
@@ -15,13 +15,18 @@ use crate::ai::{ChainedAI, HeadAI};
 #[derive(Debug, StructOpt)]
 #[structopt(name = "solver", about = "A solver of ICFPC 2022 problems")]
 struct Opt {
+    #[structopt(
+        short = "a",
+        long = "ai",
+        help = "comma separated list of AIs, e.g. 'Cross,Refine'"
+    )]
     ai: String,
 
-    #[structopt(parse(from_os_str))]
+    #[structopt(short = "i", long = "input", parse(from_os_str))]
     input_path: PathBuf,
 
-    #[structopt(parse(from_os_str))]
-    output_path: PathBuf,
+    #[structopt(short = "o", long = "output-dir", parse(from_os_str))]
+    output_dir: PathBuf,
 }
 
 fn parse_ai_string(ai_str: &str) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn ChainedAI>>)> {
@@ -49,6 +54,17 @@ async fn main() -> anyhow::Result<()> {
 
     let (mut head_ai, chained_ais) = parse_ai_string(&opt.ai)?;
 
+    if !opt.output_dir.is_dir() {
+        bail!("'{}' is not a directory", opt.output_dir.to_string_lossy());
+    }
+
+    let problem_id = opt
+        .input_path
+        .file_stem()
+        .expect("--input should be a file name.")
+        .to_string_lossy()
+        .to_string();
+
     let img = image::open(opt.input_path)?;
     let mut program = head_ai.solve(&img);
 
@@ -63,11 +79,14 @@ async fn main() -> anyhow::Result<()> {
     let output_image = simulator::rasterize_state(&state, img.width(), img.height());
     output_image.save("result.png")?;
 
-    fs::write(opt.output_path, format!("{program}"))?;
+    let output_basename = problem_id + ".isl";
+    let output_filename = opt.output_dir.join(output_basename);
+    println!("output to: {}", output_filename.to_string_lossy());
+    fs::write(output_filename, format!("{program}"))?;
 
     // db::save(
     //     "482eb33b-b510-4e06-bec9-9222159deaee",
-    //     1,
+    //     problem_id,
     //     &program,
     //     score,
     //     "result.png",
