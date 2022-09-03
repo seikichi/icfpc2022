@@ -47,14 +47,17 @@ mod tests {
         let mut image = Image::new(10, 4);
         simple_block.rasterize(&mut image);
 
-        let expected = vec!["..........", "..........", ".xxxxx....", ".xxxxx...."]
-            .into_iter()
-            .map(|row| {
-                row.chars()
-                    .map(|c| if c == 'x' { red } else { white })
-                    .collect::<Vec<_>>()
-            })
-            .collect::<Vec<_>>();
+        #[rustfmt::skip]
+        let expected = vec![
+            "..........",
+            "..........",
+            ".xxxxx....",
+            ".xxxxx....",
+        ].into_iter().map(|row| {
+            row.chars()
+                .map(|c| if c == 'x' { red } else { white })
+                .collect::<Vec<_>>()
+        }).collect::<Vec<_>>();
 
         assert_eq!(expected, image.0);
     }
