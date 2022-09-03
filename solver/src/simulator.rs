@@ -46,6 +46,7 @@ impl SimpleBlock {
 #[derive(Debug, Clone, PartialEq)]
 pub struct State {
     pub blocks: HashMap<BlockId, SimpleBlock>,
+    pub next_global_id: u32,
 }
 impl State {
     pub fn initial_state(w: i32, h: i32) -> Self {
@@ -54,7 +55,10 @@ impl State {
             BlockId(vec![0]),
             SimpleBlock::new(Point::new(0, 0), glam::IVec2::new(w, h), Color::ONE),
         );
-        State { blocks }
+        State {
+            blocks,
+            next_global_id: 1,
+        }
     }
 }
 
@@ -159,8 +163,8 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             simple_block.color = *color;
         }
         Move::Swap { ref a, ref b } => {
-            let mut block1 = state.blocks.get_mut(a)?.clone();
-            let mut block2 = state.blocks.get_mut(b)?.clone();
+            let mut block1 = state.blocks.get(a)?.clone();
+            let mut block2 = state.blocks.get(b)?.clone();
             if block1.size != block2.size {
                 return None;
             }
@@ -168,10 +172,36 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             state.blocks.insert(a.clone(), block1);
             state.blocks.insert(b.clone(), block2);
         }
-        Move::Merge {
-            a: ref _a,
-            b: ref _b,
-        } => {
+        Move::Merge { a: ref a, b: ref b } => {
+            let mut a = a;
+            let mut b = b;
+            let mut block1 = state.blocks.get(a)?.clone();
+            let mut block2 = state.blocks.get(b)?.clone();
+            if block1.p.x > block2.p.x || block1.p.y > block2.p.y {
+                std::mem::swap(&mut block1, &mut block2);
+                std::mem::swap(&mut a, &mut b);
+            }
+            let next_size = if block1.p.x == block2.p.x {
+                if block1.size.x != block2.size.x || block1.p.y + block1.size.y != block2.p.y {
+                    return None;
+                }
+                Point::new(block1.size.x, block1.size.y + block2.size.y)
+            } else {
+                if block1.size.y != block2.size.y || block1.p.x + block1.size.x != block2.p.x {
+                    return None;
+                }
+                Point::new(block1.size.x + block2.size.x, block1.size.y)
+            };
+            // TODO Colorが混ざるので ComplexBlock にする
+            let next_block = SimpleBlock::new(block1.p, next_size, Color::ZERO);
+            state
+                .blocks
+                .insert(BlockId(vec![state.next_global_id]), next_block);
+            state.next_global_id += 1;
+            block1.active = false;
+            block2.active = false;
+            state.blocks.insert(a.clone(), block1);
+            state.blocks.insert(b.clone(), block2);
             unimplemented!()
         }
     }
