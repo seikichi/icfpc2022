@@ -24,10 +24,8 @@ impl RefineAi {
         for iter in 0..100 {
             let mut next_program = prev_program.clone();
             let t = rng.gen_range(0..next_program.0.len());
-            let mut state =
-                simulator::State::initial_state(image.width() as i32, image.height() as i32);
-            simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
             match next_program.0[t] {
+                // TODO swap color timing
                 Move::PCut {
                     ref block_id,
                     point,
@@ -39,7 +37,7 @@ impl RefineAi {
                         block_id: block_id.clone(),
                         point: npoint,
                     };
-                    // TODO child adjust
+                    // TOOD PCut -> LCut
                 }
                 Move::LCut {
                     ref block_id,
@@ -53,6 +51,11 @@ impl RefineAi {
                     ref block_id,
                     color,
                 } => {
+                    let mut state = simulator::State::initial_state(
+                        image.width() as i32,
+                        image.height() as i32,
+                    );
+                    simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
                     let block = state.blocks[block_id];
                     let r = rng.gen_range(0..2);
                     let color = if r == 0 {
