@@ -9,6 +9,9 @@ use image::{self, RgbaImage};
 #[derive(Debug, Clone, PartialEq)]
 pub struct Image(pub Vec<Vec<isl::Color>>);
 impl Image {
+    pub fn new(w: usize, h: usize) -> Self {
+        Image(vec![vec![glam::Vec4::ONE; w as usize]; h as usize])
+    }
     pub fn width(&self) -> usize {
         self.0[0].len()
     }
@@ -18,8 +21,15 @@ impl Image {
     pub fn area(&self) -> usize {
         self.width() * self.height()
     }
-    pub fn new(w: usize, h: usize) -> Self {
-        Image(vec![vec![glam::Vec4::ONE; w as usize]; h as usize])
+    #[allow(dead_code)]
+    pub fn average(&self, p: isl::Point, size: isl::Point) -> Color {
+        let mut sum = Color::ZERO;
+        for y in p.y..(p.y + size.y) {
+            for x in p.x..(p.x + size.x) {
+                sum += self.0[y as usize][x as usize];
+            }
+        }
+        return sum / (size.y * size.x) as f32;
     }
     #[allow(dead_code)]
     pub fn save(&self, path: &str) {
