@@ -43,7 +43,8 @@ pub async fn save(
         .table_name(table_name)
         .key("PK", AttributeValue::S(pk.clone()))
         .key("SK", AttributeValue::S(pk))
-        .update_expression(format!("SET S#{} = :score", problem_id))
+        .update_expression("SET #key = :score")
+        .expression_attribute_names("#key", format!("S#{}", problem_id))
         .expression_attribute_values(":score", AttributeValue::N(score.to_string()))
         .send()
         .await?;
