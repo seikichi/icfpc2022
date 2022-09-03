@@ -22,6 +22,9 @@ fn main() {
     let solver = ai::CrossAI { size: 3 };
     let program = solver.solve(&img);
 
+    let solver2 = refine_ai::RefineAi {};
+    let program = solver2.solve(&program, &img);
+
     if let Some(score) = simulator::calc_score(&program, &img) {
         println!("score: {}", score);
         let state = simulator::simulate_all(&program, &img).unwrap();

@@ -17,7 +17,7 @@ impl Display for BlockId {
     }
 }
 impl BlockId {
-    fn is_child(&self, target: &BlockId) -> bool {
+    pub fn is_child(&self, target: &BlockId) -> bool {
         if self.0.len() >= target.0.len() {
             return false;
         }
