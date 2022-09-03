@@ -37,6 +37,10 @@ impl HeadAI for MergeAI {
                 panic!("can't find mergable block");
             }
         }
+        ret.0.push(Move::Color {
+            block_id: BlockId::new(&vec![self.merged_block_id()]),
+            color: Color::ONE,
+        });
         return ret;
     }
 }
