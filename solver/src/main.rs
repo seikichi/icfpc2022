@@ -7,6 +7,7 @@ mod refine_ai;
 mod simulator;
 
 use anyhow::bail;
+use std::env;
 use std::fs;
 use std::path::PathBuf;
 use structopt::StructOpt;
@@ -93,12 +94,15 @@ async fn main() -> anyhow::Result<()> {
     output_image.save(output_image_filename.clone())?;
 
     if let Some(run_id) = opt.run_id {
+        let commit = env::var("COMMIT")?;
         db::save(
             &run_id,
             &problem_id,
             &program,
             score,
             &output_image_filename.to_string_lossy(),
+            &opt.ai,
+            &commit,
         )
         .await?;
     }

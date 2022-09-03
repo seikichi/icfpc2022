@@ -1,6 +1,6 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
-import * as lambda from "aws-cdk/aws-lambda";
+import * as lambda from "aws-cdk-lib/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
