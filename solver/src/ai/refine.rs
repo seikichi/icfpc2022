@@ -7,7 +7,7 @@ use crate::simulator::simulate_partial;
 use rand::Rng;
 
 pub struct RefineAi {
-    //
+    pub n_iters: usize,
 }
 
 impl ai::ChainedAI for RefineAi {
@@ -17,7 +17,7 @@ impl ai::ChainedAI for RefineAi {
         let mut best_program = initial_program.clone();
         let mut best_score = simulator::calc_score(initial_program, image).unwrap();
         let mut prev_program = initial_program.clone();
-        for iter in 0..50000 {
+        for iter in 0..self.n_iters {
             let mut next_program = prev_program.clone();
             if next_program.0.len() == 0 {
                 break;
@@ -47,22 +47,31 @@ impl ai::ChainedAI for RefineAi {
                         } else {
                             continue;
                         }
-                    } else {
-                        // // PCut -> LCut and remove all child
-                        // let (orientation, line_number) = if rng.gen_range(0..2) == 0 {
-                        //     (Orientation::Vertical, point.x)
-                        // } else {
-                        //     (Orientation::Horizontal, point.y)
-                        // };
                     }
                 }
                 Move::LCut {
-                    block_id: _,
-                    orientation: _,
-                    line_number: _,
+                    ref block_id,
+                    orientation,
+                    line_number,
                 } => {
                     // TODO
-                    continue;
+                    let r = rng.gen_range(0..2);
+                    if r == 0 {
+                        // change LCut position
+                        let d = rng.gen_range(-5..=5);
+                        next_program.0[t] = Move::LCut {
+                            block_id: block_id.clone(),
+                            orientation,
+                            line_number: line_number + d,
+                        };
+                    } else {
+                        next_program.0.remove(t);
+                        if let Some(result) = Self::remove_all_child(&next_program, block_id) {
+                            next_program = result;
+                        } else {
+                            continue;
+                        }
+                    }
                 }
                 Move::Color {
                     ref block_id,
@@ -111,11 +120,6 @@ impl ai::ChainedAI for RefineAi {
 }
 
 impl RefineAi {
-    #[allow(dead_code)]
-    pub fn new() -> Self {
-        RefineAi {}
-    }
-
     fn remove_all_child(prev_program: &Program, target_block_id: &BlockId) -> Option<Program> {
         let mut next_program = Program(vec![]);
         for i in 0..prev_program.0.len() {

@@ -9,7 +9,9 @@ use crate::{
 use glam::IVec2;
 use rand::prelude::*;
 
-pub struct AnnealingAI {}
+pub struct AnnealingAI {
+    pub time_limit: Duration,
+}
 
 impl ChainedAI for AnnealingAI {
     fn solve(&mut self, image: &Image, initial_program: &Program) -> Program {
@@ -17,7 +19,6 @@ impl ChainedAI for AnnealingAI {
         let mut rng = SmallRng::from_entropy();
         let mut current_score = self.calc_ann_score(&solution, image).unwrap();
         let start_at = Instant::now();
-        let time_limit = Duration::from_secs(10);
 
         let mut best_solution = solution.clone();
         let mut best_score = current_score;
@@ -31,13 +32,13 @@ impl ChainedAI for AnnealingAI {
             iter += 1;
             if iter % 100 == 0 {
                 let elapsed = Instant::now() - start_at;
-                if elapsed >= time_limit {
+                if elapsed >= self.time_limit {
                     eprintln!("iter = {}", iter);
                     return best_solution;
                 }
 
                 // tweak temperature
-                let progress = elapsed.as_secs_f64() / time_limit.as_secs_f64();
+                let progress = elapsed.as_secs_f64() / self.time_limit.as_secs_f64();
                 temperature = initial_temperature * (1.0 - progress) * (-progress).exp2();
             }
 
