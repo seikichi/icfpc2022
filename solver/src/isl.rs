@@ -45,6 +45,7 @@ pub fn format_color(c: &Color) -> String {
         (c.w * 255.0).round() as u32
     )
 }
+pub const INVALID_COLOR: Color = Color::new(-1.0, -1.0, -1.0, -1.0);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Orientation {
