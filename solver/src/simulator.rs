@@ -199,7 +199,7 @@ pub fn simulate_partial(state: &mut State, program: &[Move]) -> Option<()> {
     return Some(());
 }
 
-pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
+pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<i64> {
     let (base, size) = match mv {
         Move::PCut {
             ref block_id,
@@ -222,7 +222,7 @@ pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
             unimplemented!()
         }
     };
-    Some((base * (w * h) as f32 / (size.x * size.y) as f32).round())
+    Some((base * (w * h) as f32 / (size.x * size.y) as f32).round() as i64)
 }
 
 #[allow(dead_code)]
@@ -244,7 +244,7 @@ fn rasterize_parital_state(p: Point, size: Point, state: &State, w: usize, h: us
     return image;
 }
 
-pub fn calc_state_similarity(state: &State, target_image: &Image) -> f32 {
+pub fn calc_state_similarity(state: &State, target_image: &Image) -> i64 {
     let w = target_image.width();
     let h = target_image.height();
     return calc_partial_state_similarity(
@@ -260,27 +260,27 @@ pub fn calc_partial_state_similarity(
     size: Point,
     state: &State,
     target_image: &Image,
-) -> f32 {
+) -> i64 {
     let w = target_image.width();
     let h = target_image.height();
     let current_image = rasterize_parital_state(p, size, state, w, h);
-    let mut similarity = 0.0;
+    let mut similarity: f64 = 0.0;
     for y in p.y..(p.y + size.y) {
         for x in p.x..(p.x + size.x) {
             let d =
                 current_image.0[y as usize][x as usize] - target_image.0[y as usize][x as usize];
-            similarity += (d * 255.0).round().length();
+            similarity += (d * 255.0).round().length() as f64;
         }
     }
-    return similarity * 0.005;
+    return (similarity * 0.005).round() as i64;
 }
 
 #[allow(dead_code)]
-pub fn calc_score(program: &Program, target_image: &Image) -> Option<f32> {
+pub fn calc_score(program: &Program, target_image: &Image) -> Option<i64> {
     let h = target_image.height();
     let w = target_image.width();
     let mut state = State::initial_state(w as i32, h as i32);
-    let mut cost = 0.0;
+    let mut cost = 0;
     for line_number in 0..program.0.len() {
         let mv = &program.0[line_number];
         cost += move_cost(&state, &mv, w, h)?;
@@ -542,7 +542,7 @@ mod tests {
         //eprintln!("actuall_image:\n{:?}", rasterize_state(&state, 5, 3));
 
         let expected_pixel_diff = 3.0 * (255.0 * 255.0f32 + 255.0 * 255.0f32).sqrt();
-        let expected_similarity = expected_pixel_diff * 0.005;
+        let expected_similarity = (expected_pixel_diff * 0.005).round() as i64;
 
         let actuall = calc_state_similarity(&state, &target_image);
         assert_eq!(expected_similarity, actuall);
@@ -566,7 +566,7 @@ mod tests {
             color: Color::ZERO,
         };
         let actual = move_cost(&state, &mv, 5, 3).unwrap();
-        let expected = (5.0f32 * (5.0 * 3.0) / (3.0 * 3.0)).round();
+        let expected = (5.0f32 * (5.0 * 3.0) / (3.0 * 3.0)).round() as i64;
         assert_eq!(expected, actual);
     }
 }
