@@ -3,17 +3,15 @@ use crate::isl::*;
 use crate::simulator;
 use crate::simulator::calc_score;
 use crate::simulator::simulate_partial;
+use crate::ai;
 use rand::Rng;
 
 pub struct RefineAi {
     //
 }
 
-impl RefineAi {
-    pub fn new() -> Self {
-        RefineAi {}
-    }
-    pub fn solve(&self, initial_program: &Program, image: &image::Image) -> Program {
+impl ai::ChainedAI for RefineAi {
+    fn solve(&mut self, image: &image::Image, initial_program: &Program) -> Program {
         // TODO seed_from_u64
         let mut rng = rand::thread_rng();
         let mut best_program = initial_program.clone();
@@ -106,6 +104,12 @@ impl RefineAi {
             }
         }
         return best_program;
+    }
+}
+
+impl RefineAi {
+    pub fn new() -> Self {
+        RefineAi {}
     }
 
     fn remove_all_child(prev_program: &Program, target_block_id: &BlockId) -> Option<Program> {
