@@ -34,36 +34,6 @@ impl SimpleBlock {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use glam::IVec2;
-
-    #[test]
-    fn test_simple_block_rasterize() {
-        let red = Color::new(1.0, 0.0, 0.0, 1.0);
-        let white = Color::ZERO;
-        let simple_block = SimpleBlock::new(IVec2::new(1, 2), IVec2::new(5, 3), red);
-
-        let mut image = Image::new(10, 4);
-        simple_block.rasterize(&mut image);
-
-        #[rustfmt::skip]
-        let expected = vec![
-            "..........",
-            "..........",
-            ".xxxxx....",
-            ".xxxxx....",
-        ].into_iter().map(|row| {
-            row.chars()
-                .map(|c| if c == 'x' { red } else { white })
-                .collect::<Vec<_>>()
-        }).collect::<Vec<_>>();
-
-        assert_eq!(expected, image.0);
-    }
-}
-
 #[derive(Debug, Clone, PartialEq)]
 pub struct State {
     pub blocks: HashMap<BlockId, SimpleBlock>,
@@ -73,11 +43,7 @@ impl State {
         let mut blocks = HashMap::new();
         blocks.insert(
             BlockId(vec![0]),
-            SimpleBlock::new(
-                Point::new(0, 0),
-                glam::IVec2::new(w, h),
-                Color::new(0.0, 0.0, 0.0, 0.0),
-            ),
+            SimpleBlock::new(Point::new(0, 0), glam::IVec2::new(w, h), Color::ONE),
         );
         State { blocks }
     }
@@ -140,14 +106,14 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             let mut nh = [simple_block.size.x, simple_block.size.x];
             let mut nw = [simple_block.size.y, simple_block.size.y];
             match orientation {
-                Orientation::Vertical => {
+                Orientation::Horizontal => {
                     if line_number <= 0 || simple_block.size.y <= line_number {
                         return None;
                     }
                     dy = [0, line_number];
                     nh = [line_number, simple_block.size.y - line_number];
                 }
-                Orientation::Horizontal => {
+                Orientation::Vertical => {
                     if line_number <= 0 || simple_block.size.x <= line_number {
                         return None;
                     }
@@ -262,10 +228,10 @@ pub fn calc_partial_state_similarity(
         for x in p.x..(p.x + size.x) {
             let d =
                 current_image.0[y as usize][x as usize] - target_image.0[y as usize][x as usize];
-            similarity += d.length();
+            similarity += (d * 255.0).round().length();
         }
     }
-    return similarity * 0.05;
+    return similarity * 0.005;
 }
 
 #[allow(dead_code)]
@@ -285,4 +251,72 @@ pub fn calc_score(program: &Program, target_image: &Image) -> Option<f32> {
 #[test]
 fn test_simulate() {
     // TODO
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use glam::IVec2;
+
+    #[test]
+    fn test_simple_block_rasterize() {
+        let red = Color::new(1.0, 0.0, 0.0, 1.0);
+        let simple_block = SimpleBlock::new(IVec2::new(1, 2), IVec2::new(5, 3), red);
+
+        let mut image = Image::new(10, 4);
+        simple_block.rasterize(&mut image);
+
+        #[rustfmt::skip]
+        let expected = Image::from_string_array(&[
+            "..........",
+            "..........",
+            ".xxxxx....",
+            ".xxxxx....",
+        ], red);
+
+        //eprintln!("actuall_image:\n{}", image);
+
+        assert_eq!(expected, image);
+    }
+
+    #[test]
+    fn test_calc_state_similarity() {
+        let red = Color::new(1.0, 0.0, 0.0, 1.0);
+        let mut state = State::initial_state(5, 3);
+        simulate(
+            &mut state,
+            &Move::LCut {
+                block_id: BlockId(vec![0]),
+                orientation: Orientation::Vertical,
+                line_number: 2,
+            },
+        );
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId(vec![0, 1]),
+                color: red,
+            },
+        );
+        // ..rrr
+        // ..rrr
+        // ..rrr
+
+        #[rustfmt::skip]
+        let target_image = Image::from_string_array(&[
+            "..rr.",
+            "..r.r",
+            ".rrrr",
+        ], red);
+
+        //eprintln!("target_image:\n{}", target_image);
+        //eprintln!("actuall_image:\n{}", rasterize_state(&state, 5, 3));
+        //eprintln!("actuall_image:\n{:?}", rasterize_state(&state, 5, 3));
+
+        let expected_pixel_diff = 3.0 * (255.0 * 255.0f32 + 255.0 * 255.0f32).sqrt();
+        let expected_similarity = expected_pixel_diff * 0.005;
+
+        let actuall = calc_state_similarity(&state, &target_image);
+        assert_eq!(expected_similarity, actuall);
+    }
 }

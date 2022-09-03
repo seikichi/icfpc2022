@@ -1,5 +1,8 @@
-use crate::isl;
+use std::fmt::Display;
 
+use crate::isl::{self, Color};
+
+use glam::IVec4;
 use image::GenericImageView;
 use image::{self, RgbaImage};
 
@@ -16,7 +19,7 @@ impl Image {
         self.width() * self.height()
     }
     pub fn new(w: usize, h: usize) -> Self {
-        Image(vec![vec![glam::Vec4::ZERO; w as usize]; h as usize])
+        Image(vec![vec![glam::Vec4::ONE; w as usize]; h as usize])
     }
     #[allow(dead_code)]
     pub fn save(&self, path: &str) {
@@ -31,6 +34,45 @@ impl Image {
             *pixel.2 = image::Rgba([r, g, b, a]);
         }
         img.save(path).unwrap();
+    }
+    pub fn from_string_array(string_array: &[&str], pen_color: Color) -> Self {
+        let white = Color::ONE;
+        let v = string_array
+            .into_iter()
+            .map(|row| {
+                row.chars()
+                    .map(|c| if c == '.' { white } else { pen_color })
+                    .collect::<Vec<_>>()
+            })
+            .collect::<Vec<_>>();
+        Image(v)
+    }
+}
+impl Display for Image {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let mut buf = String::new();
+        for row in self.0.iter() {
+            for pixel in row.iter() {
+                let c = (*pixel * 255.0).round().as_ivec4();
+                if c == IVec4::new(255, 255, 255, 255) {
+                    buf.push('.')
+                } else if c == IVec4::new(0, 0, 0, 255) {
+                    buf.push('#')
+                } else if c == IVec4::new(255, 0, 0, 255) {
+                    buf.push('r')
+                } else if c == IVec4::new(0, 255, 0, 255) {
+                    buf.push('g')
+                } else if c == IVec4::new(0, 0, 255, 255) {
+                    buf.push('b')
+                } else if c == IVec4::new(0, 0, 0, 0) {
+                    buf.push('z')
+                } else {
+                    buf.push('x')
+                }
+            }
+            buf.push('\n')
+        }
+        buf.fmt(f)
     }
 }
 
