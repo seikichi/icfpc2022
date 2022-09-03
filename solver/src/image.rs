@@ -206,11 +206,11 @@ pub fn replace_pixels_to_nearest_samples(image: &mut Image, samples: &[Color]) {
     }
 }
 
+/*
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    /*
     // 目視で確認する
     #[test]
     fn k_means_test() {
@@ -221,5 +221,5 @@ mod tests {
             image.save(format!("/tmp/{i}.png")).unwrap();
         }
     }
-    */
 }
+*/
