@@ -76,10 +76,10 @@ impl DpAI {
         }
         let state = self.make_state(x, y, w, h, color_id);
         let mut ret = (
-            simulator::calc_partial_state_similarity(
+            simulator::calc_partial_one_color_similarity(
                 self.convert_point(x, y),
                 self.convert_point(w, h),
-                &state,
+                self.sampled_color[color_id],
                 &self.image,
             ),
             Program(vec![]),
@@ -100,11 +100,11 @@ impl DpAI {
                     self.image.height(),
                 )
                 .unwrap();
-                let nstate = self.make_state(x, y, w, h, c);
-                let scost = simulator::calc_partial_state_similarity(
+                // let nstate = self.make_state(x, y, w, h, c);
+                let scost = simulator::calc_partial_one_color_similarity(
                     self.convert_point(x, y),
                     self.convert_point(w, h),
-                    &nstate,
+                    self.sampled_color[c],
                     &self.image,
                 );
                 if ncost + scost < ret.0 {

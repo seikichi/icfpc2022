@@ -42,6 +42,7 @@ impl HeadAI for MergeAI {
 }
 
 impl MergeAI {
+    #[allow(dead_code)]
     pub fn new(initial_state: &State) -> Self {
         MergeAI {
             state: initial_state.clone(),
@@ -55,5 +56,11 @@ impl MergeAI {
             }
         }
         return ret;
+    }
+    // 最終的に全部まとめ終わった時のblock_id
+    #[allow(dead_code)]
+    pub fn merged_block_id(&self) -> u32 {
+        assert!(self.active_block_num() == 1);
+        return self.state.next_global_id - 1;
     }
 }

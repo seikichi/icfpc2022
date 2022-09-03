@@ -193,7 +193,7 @@ impl Program {
                     a.0[0] = id;
                     b.0[0] = id;
                 }
-                Move::Merge { a, b } => {
+                Move::Merge { .. } => {
                     panic!("Can't use Merge")
                 }
             }
