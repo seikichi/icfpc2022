@@ -42,7 +42,10 @@ struct Opt {
     annealing_seconds: u64,
 }
 
-fn parse_ai_string(ai_str: &str, opt: &Opt) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn ChainedAI>>)> {
+fn parse_ai_string(
+    ai_str: &str,
+    opt: &Opt,
+) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn ChainedAI>>)> {
     let parts = ai_str.split(',').collect::<Vec<_>>();
     let head_ai: Box<dyn ai::HeadAI> = match parts[0] {
         "OneColor" => Box::new(ai::OneColorAI {}),

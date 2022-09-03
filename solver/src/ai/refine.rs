@@ -7,7 +7,7 @@ use crate::simulator::simulate_partial;
 use rand::Rng;
 
 pub struct RefineAi {
-    pub n_iters: usize
+    pub n_iters: usize,
 }
 
 impl ai::ChainedAI for RefineAi {
