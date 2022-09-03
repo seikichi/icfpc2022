@@ -241,8 +241,8 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
     Some(())
 }
 
-pub fn simulate_all(program: &Program, img: &Image) -> Result<State, ProgramExecError> {
-    let mut state = State::initial_state(img.width() as i32, img.height() as i32);
+pub fn simulate_all(program: &Program, initial_state: &State) -> Result<State, ProgramExecError> {
+    let mut state = initial_state.clone();
     simulate_partial(&mut state, &program.0)?;
     Ok(state)
 }
@@ -338,10 +338,14 @@ pub fn calc_partial_one_color_similarity(
 }
 
 #[allow(dead_code)]
-pub fn calc_score(program: &Program, target_image: &Image) -> Result<i64, ProgramExecError> {
+pub fn calc_score(
+    program: &Program,
+    target_image: &Image,
+    initial_state: &State,
+) -> Result<i64, ProgramExecError> {
     let h = target_image.height();
     let w = target_image.width();
-    let mut state = State::initial_state(w as i32, h as i32);
+    let mut state = initial_state.clone();
     let mut cost = 0;
     for line_number in 0..program.0.len() {
         let mv = &program.0[line_number];

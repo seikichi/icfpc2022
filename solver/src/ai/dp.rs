@@ -18,7 +18,7 @@ pub struct DpAI {
 }
 
 impl HeadAI for DpAI {
-    fn solve(&mut self, image: &image::Image) -> Program {
+    fn solve(&mut self, image: &image::Image, _initial_state: &simulator::State) -> Program {
         // color sampling
         self.image = image.clone();
         self.sampled_color.push(Color::ONE);

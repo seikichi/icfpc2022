@@ -52,6 +52,7 @@ fn parse_ai_string(
         "Grid" => Box::new(ai::GridAI { rows: 4, cols: 4 }),
         "Cross" => Box::new(ai::CrossAI { size: 3 }),
         "DP" => Box::new(ai::DpAI::new(8, 10)),
+        "ChangeColor" => Box::new(ai::ChangeColorAI {}),
         x => bail!("'{x}' is not a HeadAI"),
     };
     let mut chained_ais = vec![];
@@ -90,11 +91,8 @@ async fn main() -> anyhow::Result<()> {
     let mut score_history = vec![];
 
     let img = image::open(opt.input_path.clone())?;
-    let mut program = head_ai.solve(&img);
 
-    score_history.push(simulator::calc_score(&program, &img)?);
-
-    let initial_state = initial_config::load_inistal_state(
+    let initial_state = initial_config::load_initial_state(
         &opt.input_path
             .parent()
             .unwrap()
@@ -104,9 +102,13 @@ async fn main() -> anyhow::Result<()> {
         &img,
     );
 
+    let mut program = head_ai.solve(&img, &initial_state);
+
+    score_history.push(simulator::calc_score(&program, &img, &initial_state)?);
+
     for mut chained_ai in chained_ais {
-        program = chained_ai.solve(&img, &program);
-        score_history.push(simulator::calc_score(&program, &img)?);
+        score_history.push(simulator::calc_score(&program, &img, &initial_state)?);
+        program = chained_ai.solve(&img, &initial_state, &program);
     }
 
     println!("Score History:");
@@ -114,8 +116,8 @@ async fn main() -> anyhow::Result<()> {
         println!("    {i}: {score}")
     }
 
-    let score = simulator::calc_score(&program, &img)?;
-    let state = simulator::simulate_all(&program, &img)?;
+    let score = simulator::calc_score(&program, &img, &initial_state)?;
+    let state = simulator::simulate_all(&program, &initial_state)?;
     let output_image = simulator::rasterize_state(&state, img.width(), img.height());
 
     let output_filename = opt.output_dir.join(problem_id.clone() + ".isl");

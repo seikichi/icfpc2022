@@ -24,7 +24,7 @@ struct InitialConfig {
     blocks: Vec<InitialBlock>,
 }
 
-fn load_inital_config(path: &str) -> Option<InitialConfig> {
+fn load_initial_config(path: &str) -> Option<InitialConfig> {
     let content = match fs::read_to_string(path) {
         Ok(s) => s,
         Err(_error) => return None,
@@ -35,8 +35,8 @@ fn load_inital_config(path: &str) -> Option<InitialConfig> {
     return Some(config);
 }
 
-pub fn load_inistal_state(path: &str, image: &Image) -> State {
-    if let Some(config) = load_inital_config(path) {
+pub fn load_initial_state(path: &str, image: &Image) -> State {
+    if let Some(config) = load_initial_config(path) {
         let blocks = HashMap::new();
         let mut state = State {
             blocks,

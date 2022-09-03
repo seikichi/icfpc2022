@@ -1,6 +1,7 @@
 use crate::ai::HeadAI;
 use crate::image;
 use crate::isl;
+use crate::simulator;
 use std::collections::VecDeque;
 
 pub struct GridAI {
@@ -9,7 +10,7 @@ pub struct GridAI {
 }
 
 impl HeadAI for GridAI {
-    fn solve(&mut self, image: &image::Image) -> isl::Program {
+    fn solve(&mut self, image: &image::Image, _initial_state: &simulator::State) -> isl::Program {
         let height = image.height();
         let width = image.width();
 
