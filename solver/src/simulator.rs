@@ -55,6 +55,9 @@ impl SimpleBlock {
             }
         }
     }
+    pub fn area(&self) -> i32 {
+        self.size.x * self.size.y
+    }
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -237,29 +240,17 @@ pub fn simulate_partial(state: &mut State, program: &[Move]) -> Result<(), Progr
 }
 
 pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<i64> {
-    let (base, size) = match mv {
-        Move::PCut {
-            ref block_id,
-            point: _,
-        } => (10.0, state.blocks.get(block_id)?.size),
-        Move::LCut {
-            ref block_id,
-            orientation: _,
-            line_number: _,
-        } => (7.0, state.blocks.get(block_id)?.size),
-        Move::Color {
-            ref block_id,
-            color: _,
-        } => (5.0, state.blocks.get(block_id)?.size),
-        Move::Swap { ref a, b: _ } => (3.0, state.blocks.get(a)?.size),
-        Move::Merge {
-            a: ref _a,
-            b: ref _b,
-        } => {
-            unimplemented!()
-        }
+    let (base, area) = match mv {
+        Move::PCut { ref block_id, .. } => (10.0, state.blocks.get(block_id)?.area()),
+        Move::LCut { ref block_id, .. } => (7.0, state.blocks.get(block_id)?.area()),
+        Move::Color { ref block_id, .. } => (5.0, state.blocks.get(block_id)?.area()),
+        Move::Swap { ref a, .. } => (3.0, state.blocks.get(a)?.area()),
+        Move::Merge { ref a, ref b } => (
+            1.0,
+            state.blocks.get(a)?.area().max(state.blocks.get(b)?.area()),
+        ),
     };
-    Some((base * (w * h) as f32 / (size.x * size.y) as f32).round() as i64)
+    Some((base * (w * h) as f32 / area as f32).round() as i64)
 }
 
 #[allow(dead_code)]
