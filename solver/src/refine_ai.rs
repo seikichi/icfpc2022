@@ -57,16 +57,16 @@ impl ai::ChainedAI for RefineAi {
                     }
                 }
                 Move::LCut {
-                    ref block_id,
-                    orientation,
-                    line_number,
+                    block_id: _,
+                    orientation: _,
+                    line_number: _,
                 } => {
                     // TODO
                     continue;
                 }
                 Move::Color {
                     ref block_id,
-                    color,
+                    color: _,
                 } => {
                     let mut state = simulator::State::initial_state(
                         image.width() as i32,
@@ -111,6 +111,7 @@ impl ai::ChainedAI for RefineAi {
 }
 
 impl RefineAi {
+    #[allow(dead_code)]
     pub fn new() -> Self {
         RefineAi {}
     }

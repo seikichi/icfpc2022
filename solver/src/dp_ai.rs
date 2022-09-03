@@ -37,7 +37,6 @@ impl HeadAI for DpAI {
             if ng {
                 continue;
             }
-            println!("{}", _i);
             self.sampled_color.push(c);
             if self.sampled_color.len() == self.sample_color_num {
                 break;

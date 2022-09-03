@@ -172,6 +172,7 @@ impl Display for Program {
     }
 }
 impl Program {
+    #[allow(dead_code)]
     fn len(&self) -> usize {
         return self.0.len();
     }
