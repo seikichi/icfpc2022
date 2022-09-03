@@ -7,7 +7,7 @@ use crate::simulator::simulate_partial;
 use rand::Rng;
 
 pub struct RefineAi {
-    //
+    pub n_iters: usize
 }
 
 impl ai::ChainedAI for RefineAi {
@@ -17,7 +17,7 @@ impl ai::ChainedAI for RefineAi {
         let mut best_program = initial_program.clone();
         let mut best_score = simulator::calc_score(initial_program, image).unwrap();
         let mut prev_program = initial_program.clone();
-        for iter in 0..50000 {
+        for iter in 0..self.n_iters {
             let mut next_program = prev_program.clone();
             if next_program.0.len() == 0 {
                 break;
@@ -120,11 +120,6 @@ impl ai::ChainedAI for RefineAi {
 }
 
 impl RefineAi {
-    #[allow(dead_code)]
-    pub fn new() -> Self {
-        RefineAi {}
-    }
-
     fn remove_all_child(prev_program: &Program, target_block_id: &BlockId) -> Option<Program> {
         let mut next_program = Program(vec![]);
         for i in 0..prev_program.0.len() {

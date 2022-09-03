@@ -9,6 +9,7 @@ use anyhow::bail;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
+use std::time::Duration;
 use structopt::StructOpt;
 
 use crate::ai::{ChainedAI, HeadAI};
@@ -33,9 +34,15 @@ struct Opt {
     // 最初に適当な run-id を採番して、それがここに渡ってくる (妄想)
     #[structopt(short = "r", long = "run-id")]
     run_id: Option<String>,
+
+    #[structopt(long = "refine-iters", default_value = "50000")]
+    refine_iters: usize,
+
+    #[structopt(long = "annealing-seconds", default_value = "10")]
+    annealing_seconds: u64,
 }
 
-fn parse_ai_string(ai_str: &str) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn ChainedAI>>)> {
+fn parse_ai_string(ai_str: &str, opt: &Opt) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn ChainedAI>>)> {
     let parts = ai_str.split(',').collect::<Vec<_>>();
     let head_ai: Box<dyn ai::HeadAI> = match parts[0] {
         "OneColor" => Box::new(ai::OneColorAI {}),
@@ -47,8 +54,12 @@ fn parse_ai_string(ai_str: &str) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn
     let mut chained_ais = vec![];
     for name in &parts[1..] {
         let chained_ai: Box<dyn ai::ChainedAI> = match *name {
-            "Refine" => Box::new(ai::RefineAi {}),
-            "Annealing" => Box::new(ai::AnnealingAI {}),
+            "Refine" => Box::new(ai::RefineAi {
+                n_iters: opt.refine_iters,
+            }),
+            "Annealing" => Box::new(ai::AnnealingAI {
+                time_limit: Duration::from_secs(opt.annealing_seconds),
+            }),
             x => bail!("'{x}' is not a ChainedAI"),
         };
         chained_ais.push(chained_ai);
@@ -60,7 +71,7 @@ fn parse_ai_string(ai_str: &str) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn
 async fn main() -> anyhow::Result<()> {
     let opt = Opt::from_args();
 
-    let (mut head_ai, chained_ais) = parse_ai_string(&opt.ai)?;
+    let (mut head_ai, chained_ais) = parse_ai_string(&opt.ai, &opt)?;
 
     if !opt.output_dir.is_dir() {
         bail!("'{}' is not a directory", opt.output_dir.to_string_lossy());
