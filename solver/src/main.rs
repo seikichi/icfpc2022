@@ -1,4 +1,5 @@
 mod ai;
+mod annealing_ai;
 mod db;
 mod dp_ai;
 mod image;
@@ -50,6 +51,7 @@ fn parse_ai_string(ai_str: &str) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn
     for name in &parts[1..] {
         let chained_ai: Box<dyn ai::ChainedAI> = match *name {
             "Refine" => Box::new(refine_ai::RefineAi {}),
+            "Annealing" => Box::new(annealing_ai::AnnealingAI {}),
             x => bail!("'{x}' is not a ChainedAI"),
         };
         chained_ais.push(chained_ai);
