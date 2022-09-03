@@ -11,8 +11,6 @@ import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import MuiLink from "@mui/material/Link";
 
-import { useEffect } from "react";
-
 import { fetchRunList, Run } from "../lib/db";
 
 export async function getServerSideProps() {
@@ -39,7 +37,7 @@ const Home: NextPage<Props> = ({ runs }) => {
           <TableHead>
             <TableRow>
               <TableCell>実行日時</TableCell>
-              <TableCell>AI</TableCell>
+              <TableCell>引数</TableCell>
               <TableCell>問題数</TableCell>
               <TableCell>スコア</TableCell>
             </TableRow>
@@ -54,7 +52,7 @@ const Home: NextPage<Props> = ({ runs }) => {
                       <MuiLink>{date}</MuiLink>
                     </Link>
                   </TableCell>
-                  <TableCell>{r.ai}</TableCell>
+                  <TableCell>{r.args}</TableCell>
                   <TableCell>-</TableCell>
                   <TableCell>-</TableCell>
                 </TableRow>

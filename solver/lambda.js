@@ -1,13 +1,22 @@
 const child_process = require("child_process");
 
-exports.handler = async function (event, context) {
+exports.handler = async function (event, _context) {
   const problemId = event.problemId;
-  const ai = event.ai;
   const runId = event.runId;
   const commit = process.env.COMMIT;
 
-  const command = `/code/target/release/icfpc2022 -a ${ai} -i /code/problems/${problemId}.png -o /tmp -r ${runId}`;
-  child_process.execSync(command, {
+  const command = "/code/target/release/icfpc2022";
+  const args = [
+    ...event.args.trim().split(/\s+/),
+    "-i",
+    `/code/problems/${problemId}.png`,
+    "-o",
+    "/tmp",
+    "-r",
+    `${runId}`,
+  ];
+
+  child_process.spawnSync(command, args, {
     env: {
       ...event.env,
       ...process.env,
