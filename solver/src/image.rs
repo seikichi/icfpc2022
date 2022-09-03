@@ -1,4 +1,5 @@
 use std::fmt::Display;
+use std::path::Path;
 
 use crate::isl::{self, Color};
 
@@ -94,7 +95,7 @@ impl Display for Image {
     }
 }
 
-pub fn open(path: &str) -> Image {
+pub fn open<P: AsRef<Path>>(path: P) -> Image {
     let img = image::open(path).unwrap();
     let (w, h) = img.dimensions();
 

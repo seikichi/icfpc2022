@@ -4,20 +4,25 @@ mod isl;
 mod refine_ai;
 mod simulator;
 
-use std::env;
 use std::fs;
+use std::path::PathBuf;
 use std::process::exit;
+use structopt::StructOpt;
+
+#[derive(Debug, StructOpt)]
+#[structopt(name = "solver", about = "A solver of ICFPC 2022 problems")]
+struct Opt {
+    #[structopt(parse(from_os_str))]
+    input_path: PathBuf,
+
+    #[structopt(parse(from_os_str))]
+    output_path: PathBuf,
+}
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-    if args.len() != 3 {
-        println!("Usage: solver input.png output.isl");
-        exit(2);
-    }
-    let input_path = &args[1];
-    let output_path = &args[2];
+    let opt = Opt::from_args();
 
-    let img = image::open(input_path);
+    let img = image::open(opt.input_path);
     // let solver = ai::OneColorAI {};
     // let solver = ai::GridAI { rows: 4, cols: 4 };
     let solver = ai::CrossAI { size: 3 };
@@ -36,5 +41,5 @@ fn main() {
         exit(1);
     }
 
-    fs::write(output_path, format!("{program}")).unwrap();
+    fs::write(opt.output_path, format!("{program}")).unwrap();
 }
