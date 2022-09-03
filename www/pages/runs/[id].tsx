@@ -14,6 +14,7 @@ import MuiLink from "@mui/material/Link";
 import { useEffect } from "react";
 
 import { fetchRun, RunResult } from "../../lib/db";
+import React from "react";
 
 interface Props {
   result: RunResult;
@@ -42,17 +43,17 @@ const Page: NextPage<Props> = ({ result }) => {
         <li>ID: {result.id}</li>
         <li>Score: {result.score}</li>
         <li>Date: {new Date(1000 * result.time).toLocaleString()}</li>
-        <li>AI: {result.ai}</li>
+        <li>Args: {result.args}</li>
       </ul>
       各タスク:
       <ul>
-        {result.results.map((r) => {
-          return (
-            <li key={r.problemId}>
+        {result.results.map((r) => (
+          <React.Fragment key={r.problemId}>
+            <li>
               Problem: {r.problemId}, Score: {r.score}
             </li>
-          );
-        })}
+          </React.Fragment>
+        ))}
       </ul>
     </>
   );
