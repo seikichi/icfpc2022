@@ -2,6 +2,14 @@ use crate::image;
 use crate::isl;
 use std::collections::HashMap;
 
+pub trait HeadAI {
+    fn solve(&mut self, image: &image::Image) -> isl::Program;
+}
+
+pub trait ChainedAI {
+    fn solve(&mut self, image: &image::Image, program: &isl::Program) -> isl::Program;
+}
+
 pub struct OneColorAI {}
 
 pub struct GridAI {
@@ -13,9 +21,8 @@ pub struct CrossAI {
     pub size: usize,
 }
 
-impl OneColorAI {
-    #[allow(dead_code)]
-    pub fn solve(&self, image: &image::Image) -> isl::Program {
+impl HeadAI for OneColorAI {
+    fn solve(&mut self, image: &image::Image) -> isl::Program {
         let mut sum = glam::Vec4::ZERO;
 
         for row in &image.0 {
@@ -33,9 +40,8 @@ impl OneColorAI {
     }
 }
 
-impl GridAI {
-    #[allow(dead_code)]
-    pub fn solve(&self, image: &image::Image) -> isl::Program {
+impl HeadAI for GridAI {
+    fn solve(&mut self, image: &image::Image) -> isl::Program {
         let height = image.height();
         let width = image.width();
 
@@ -182,8 +188,10 @@ impl CrossAI {
 
         result
     }
+}
 
-    pub fn solve(&self, image: &image::Image) -> isl::Program {
+impl HeadAI for CrossAI {
+    fn solve(&mut self, image: &image::Image) -> isl::Program {
         // 再帰的 に pcut してく
         // 各マスの色に何を塗るかを集計して
         // 分割しなくていいならやめる (-> 再帰でなんかそれっぽく書く)
