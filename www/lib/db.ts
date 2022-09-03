@@ -32,9 +32,15 @@ export interface Solution {
 // .env に書け
 const region = "ap-northeast-1";
 const TableName = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
+const client = new DynamoDBClient({
+  region,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
+});
 
 export async function fetchSolutionList(id: string): Promise<Solution[]> {
-  const client = new DynamoDBClient({ region });
   const { Items: items } = await client.send(
     new QueryCommand({
       TableName,
@@ -67,7 +73,6 @@ export async function fetchSolutionList(id: string): Promise<Solution[]> {
 }
 
 export async function fetchRun(id: string): Promise<RunResult> {
-  const client = new DynamoDBClient({ region });
   const { Items: items } = await client.send(
     new QueryCommand({
       TableName,
@@ -112,7 +117,6 @@ export async function fetchRun(id: string): Promise<RunResult> {
 }
 
 export async function fetchRunList(): Promise<Run[]> {
-  const client = new DynamoDBClient({ region });
   const { Items: items } = await client.send(
     new QueryCommand({
       TableName,
