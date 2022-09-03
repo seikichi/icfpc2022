@@ -180,15 +180,23 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
 
 pub fn simulate_all(program: &Program, img: &Image) -> Option<State> {
     let mut state = State::initial_state(img.width() as i32, img.height() as i32);
-    for line_number in 0..program.0.len() {
-        let mv = &program.0[line_number];
-        let result = simulate(&mut state, mv);
+    if let Some(result) = simulate_partial(&mut state, &program.0) {
+        return Some(state);
+    }
+    return None;
+}
+
+pub fn simulate_partial(state: &mut State, program: &[Move]) -> Option<()> {
+    let mut line_number = 1;
+    for mv in program {
+        let result = simulate(state, mv);
         if result.is_none() {
             eprintln!("line {}: {} is invalid", line_number, mv);
             return None;
         }
+        line_number += 1;
     }
-    return Some(state);
+    return Some(());
 }
 
 pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
