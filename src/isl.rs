@@ -16,6 +16,19 @@ impl Display for BlockId {
         write!(f, "[{ret}]")
     }
 }
+impl BlockId {
+    fn is_child(&self, target: &BlockId) -> bool {
+        if self.0.len() >= target.0.len() {
+            return false;
+        }
+        for i in 0..self.0.len() {
+            if self.0[i] != target.0[i] {
+                return false;
+            }
+        }
+        return true;
+    }
+}
 
 pub type Point = IVec2;
 pub fn format_point(p: &Point) -> String {
