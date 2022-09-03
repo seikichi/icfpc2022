@@ -1,9 +1,9 @@
-use std::fmt::Display;
+use std::{collections::VecDeque, fmt::Display};
 
 use glam::{IVec2, Vec4};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct BlockId(pub Vec<u32>);
+pub struct BlockId(pub VecDeque<u32>);
 impl Display for BlockId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut ret = String::new();
@@ -17,6 +17,9 @@ impl Display for BlockId {
     }
 }
 impl BlockId {
+    pub fn new(id: &[u32]) -> Self {
+        BlockId(VecDeque::from_iter(id.iter().copied()))
+    }
     pub fn is_child(&self, target: &BlockId) -> bool {
         if self.0.len() >= target.0.len() {
             return false;
@@ -125,33 +128,33 @@ mod tests {
     #[test]
     fn move_display_test() {
         let pcut = Move::PCut {
-            block_id: BlockId(vec![0, 4, 2]),
+            block_id: BlockId::new(&vec![0, 4, 2]),
             point: IVec2::new(12, 34),
         };
         assert_eq!("cut [0.4.2] [12, 34]", format!("{}", pcut));
 
         let lcut = Move::LCut {
-            block_id: BlockId(vec![0, 4, 2]),
+            block_id: BlockId::new(&vec![0, 4, 2]),
             orientation: Orientation::Horizontal,
             line_number: 3,
         };
         assert_eq!("cut [0.4.2] [Y] [3]", format!("{}", lcut));
 
         let color = Move::Color {
-            block_id: BlockId(vec![0, 4, 2]),
+            block_id: BlockId::new(&vec![0, 4, 2]),
             color: Color::new(1.0, 1.0, 0.5, 1.0),
         };
         assert_eq!("color [0.4.2] [255, 255, 128, 255]", format!("{}", color));
 
         let swap = Move::Swap {
-            a: BlockId(vec![0, 4, 2]),
-            b: BlockId(vec![1]),
+            a: BlockId::new(&vec![0, 4, 2]),
+            b: BlockId::new(&vec![1]),
         };
         assert_eq!("swap [0.4.2] [1]", format!("{}", swap));
 
         let merge = Move::Merge {
-            a: BlockId(vec![0, 4, 2]),
-            b: BlockId(vec![1]),
+            a: BlockId::new(&vec![0, 4, 2]),
+            b: BlockId::new(&vec![1]),
         };
         assert_eq!("merge [0.4.2] [1]", format!("{}", merge));
     }

@@ -1,6 +1,7 @@
 use crate::image;
 use crate::isl;
 use std::collections::HashMap;
+use std::collections::VecDeque;
 
 pub trait HeadAI {
     fn solve(&mut self, image: &image::Image) -> isl::Program;
@@ -34,7 +35,7 @@ impl HeadAI for OneColorAI {
         let color = sum / image.area() as f32;
 
         isl::Program(vec![isl::Move::Color {
-            block_id: isl::BlockId(vec![0]),
+            block_id: isl::BlockId::new(&vec![0]),
             color,
         }])
     }
@@ -49,7 +50,7 @@ impl HeadAI for GridAI {
         let grid_height = (height / self.rows) as i32;
         let grid_width = (width / self.cols) as i32;
 
-        let mut block_id = vec![0];
+        let mut block_id = VecDeque::from_iter(vec![0]);
 
         // y 軸で切ってく...
         for i in 1..self.rows + 1 {
@@ -65,7 +66,7 @@ impl HeadAI for GridAI {
             let mut x_block_id = block_id.clone();
             if i < self.rows {
                 // block_id を増やすのはカットしたときだけ！
-                x_block_id.push(0);
+                x_block_id.push_back(0);
             }
             for j in 1..self.cols + 1 {
                 if j < self.cols {
@@ -75,7 +76,7 @@ impl HeadAI for GridAI {
                         orientation: isl::Orientation::Vertical,
                         line_number: grid_width * (j as i32),
                     });
-                    x_block_id.push(0);
+                    x_block_id.push_back(0);
                 }
                 let y_from = grid_height * ((i - 1) as i32);
                 let y_to = grid_height * (i as i32);
@@ -94,13 +95,13 @@ impl HeadAI for GridAI {
 
                 if j < self.cols {
                     // 最後の列は X 軸のカットをしないので pop 不要
-                    x_block_id.pop();
+                    x_block_id.pop_back();
                 }
                 // 右へ移動
-                x_block_id.push(1);
+                x_block_id.push_back(1);
             }
             // 上へ移動
-            block_id.push(1);
+            block_id.push_back(1);
         }
 
         isl::Program(result)
@@ -146,7 +147,7 @@ impl CrossAI {
         ];
         for (i, ps) in next_points.iter().enumerate() {
             let mut next_block_id = block_id.clone();
-            next_block_id.0.push(i as u32);
+            next_block_id.0.push_back(i as u32);
             result.extend(self.draw(
                 next_block_id,
                 image,
@@ -199,7 +200,7 @@ impl HeadAI for CrossAI {
         let width = image.0[0].len() as i32;
 
         let result = self.draw(
-            isl::BlockId(vec![0]),
+            isl::BlockId::new(&vec![0]),
             image,
             isl::Point::ZERO,
             isl::Point::new(width, height),
@@ -229,7 +230,7 @@ impl HeadAI for CrossAI {
                 if let isl::Move::Color { block_id: _, color } = m {
                     if isl::format_color(color) == key {
                         let mut refined = vec![isl::Move::Color {
-                            block_id: isl::BlockId(vec![0]),
+                            block_id: isl::BlockId::new(&vec![0]),
                             color: color.clone(),
                         }];
                         for n in &result {

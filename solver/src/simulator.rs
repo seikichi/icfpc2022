@@ -66,7 +66,7 @@ impl State {
     pub fn initial_state(w: i32, h: i32) -> Self {
         let mut blocks = HashMap::new();
         blocks.insert(
-            BlockId(vec![0]),
+            BlockId::new(&vec![0]),
             SimpleBlock::new(Point::new(0, 0), glam::IVec2::new(w, h), Color::ONE),
         );
         State {
@@ -112,7 +112,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 let nx = p.x + dx[i];
                 let ny = p.y + dy[i];
                 let mut next_id = block_id.clone();
-                next_id.0.push(i as u32);
+                next_id.0.push_back(i as u32);
                 let next_simple_block = SimpleBlock::new(
                     Point::new(nx, ny),
                     Point::new(nw[i], nh[i]),
@@ -158,7 +158,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 let nx = p.x + dx[i];
                 let ny = p.y + dy[i];
                 let mut next_id = block_id.clone();
-                next_id.0.push(i as u32);
+                next_id.0.push_back(i as u32);
                 let next_simple_block = SimpleBlock::new(
                     Point::new(nx, ny),
                     Point::new(nw[i], nh[i]),
@@ -210,7 +210,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             let next_block = SimpleBlock::new(block1.p, next_size, INVALID_COLOR);
             state
                 .blocks
-                .insert(BlockId(vec![state.next_global_id]), next_block);
+                .insert(BlockId::new(&vec![state.next_global_id]), next_block);
             state.next_global_id += 1;
             block1.active = false;
             block2.active = false;
@@ -339,7 +339,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::PCut {
-                block_id: BlockId(vec![0]),
+                block_id: BlockId::new(&vec![0]),
                 point: Point::new(2, 1),
             },
         )
@@ -347,7 +347,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::Color {
-                block_id: BlockId(vec![0, 0]),
+                block_id: BlockId::new(&vec![0, 0]),
                 color: Color::new(1.0, 0.0, 0.0, 1.0),
             },
         )
@@ -355,7 +355,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::Color {
-                block_id: BlockId(vec![0, 2]),
+                block_id: BlockId::new(&vec![0, 2]),
                 color: Color::new(0.0, 1.0, 0.0, 1.0),
             },
         )
@@ -363,7 +363,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::Color {
-                block_id: BlockId(vec![0, 3]),
+                block_id: BlockId::new(&vec![0, 3]),
                 color: Color::new(0.0, 0.0, 1.0, 1.0),
             },
         )
@@ -388,7 +388,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::PCut {
-                block_id: BlockId(vec![0]),
+                block_id: BlockId::new(&vec![0]),
                 point: Point::new(4, 4),
             },
         )
@@ -396,7 +396,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::PCut {
-                block_id: BlockId(vec![0, 1]),
+                block_id: BlockId::new(&vec![0, 1]),
                 point: Point::new(6, 2),
             },
         )
@@ -404,7 +404,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::Color {
-                block_id: BlockId(vec![0, 1, 0]),
+                block_id: BlockId::new(&vec![0, 1, 0]),
                 color: Color::new(0.0, 1.0, 0.0, 1.0),
             },
         )
@@ -434,7 +434,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::LCut {
-                block_id: BlockId(vec![0]),
+                block_id: BlockId::new(&vec![0]),
                 orientation: Orientation::Horizontal,
                 line_number: 4,
             },
@@ -443,7 +443,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::LCut {
-                block_id: BlockId(vec![0, 1]),
+                block_id: BlockId::new(&vec![0, 1]),
                 orientation: Orientation::Horizontal,
                 line_number: 6,
             },
@@ -452,7 +452,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::Color {
-                block_id: BlockId(vec![0, 1, 0]),
+                block_id: BlockId::new(&vec![0, 1, 0]),
                 color: Color::new(0.0, 1.0, 0.0, 1.0),
             },
         )
@@ -482,7 +482,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::LCut {
-                block_id: BlockId(vec![0]),
+                block_id: BlockId::new(&vec![0]),
                 orientation: Orientation::Vertical,
                 line_number: 2,
             },
@@ -491,7 +491,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::Color {
-                block_id: BlockId(vec![0, 0]),
+                block_id: BlockId::new(&vec![0, 0]),
                 color: Color::new(1.0, 0.0, 0.0, 1.0),
             },
         )
@@ -499,8 +499,8 @@ mod tests {
         simulate(
             &mut state,
             &Move::Swap {
-                a: BlockId(vec![0, 0]),
-                b: BlockId(vec![0, 1]),
+                a: BlockId::new(&vec![0, 0]),
+                b: BlockId::new(&vec![0, 1]),
             },
         )
         .unwrap();
@@ -524,7 +524,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::PCut {
-                block_id: BlockId(vec![0]),
+                block_id: BlockId::new(&vec![0]),
                 point: Point::new(2, 1),
             },
         )
@@ -532,15 +532,15 @@ mod tests {
         simulate(
             &mut state,
             &Move::Merge {
-                a: BlockId(vec![0, 0]),
-                b: BlockId(vec![0, 3]),
+                a: BlockId::new(&vec![0, 0]),
+                b: BlockId::new(&vec![0, 3]),
             },
         )
         .unwrap();
         simulate(
             &mut state,
             &Move::Color {
-                block_id: BlockId(vec![1]),
+                block_id: BlockId::new(&vec![1]),
                 color: Color::new(1.0, 0.0, 0.0, 1.0),
             },
         )
@@ -565,7 +565,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::PCut {
-                block_id: BlockId(vec![0]),
+                block_id: BlockId::new(&vec![0]),
                 point: Point::new(2, 1),
             },
         )
@@ -573,15 +573,15 @@ mod tests {
         simulate(
             &mut state,
             &Move::Merge {
-                a: BlockId(vec![0, 2]),
-                b: BlockId(vec![0, 3]),
+                a: BlockId::new(&vec![0, 2]),
+                b: BlockId::new(&vec![0, 3]),
             },
         )
         .unwrap();
         simulate(
             &mut state,
             &Move::Color {
-                block_id: BlockId(vec![1]),
+                block_id: BlockId::new(&vec![1]),
                 color: Color::new(1.0, 0.0, 0.0, 1.0),
             },
         )
@@ -628,7 +628,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::LCut {
-                block_id: BlockId(vec![0]),
+                block_id: BlockId::new(&vec![0]),
                 orientation: Orientation::Vertical,
                 line_number: 2,
             },
@@ -637,7 +637,7 @@ mod tests {
         simulate(
             &mut state,
             &Move::Color {
-                block_id: BlockId(vec![0, 1]),
+                block_id: BlockId::new(&vec![0, 1]),
                 color: red,
             },
         )
@@ -671,14 +671,14 @@ mod tests {
         simulate(
             &mut state,
             &Move::LCut {
-                block_id: BlockId(vec![0]),
+                block_id: BlockId::new(&vec![0]),
                 orientation: Orientation::Vertical,
                 line_number: 2,
             },
         )
         .unwrap();
         let mv = Move::Color {
-            block_id: BlockId(vec![0, 1]),
+            block_id: BlockId::new(&vec![0, 1]),
             color: Color::ZERO,
         };
         let actual = move_cost(&state, &mv, 5, 3).unwrap();
