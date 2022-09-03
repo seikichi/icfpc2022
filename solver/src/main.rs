@@ -42,7 +42,7 @@ fn parse_ai_string(ai_str: &str) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn
         "OneColor" => Box::new(ai::OneColorAI {}),
         "Grid" => Box::new(ai::GridAI { rows: 4, cols: 4 }),
         "Cross" => Box::new(ai::CrossAI { size: 3 }),
-        "DP" => Box::new(dp_ai::DpAI::new(2, 3)),
+        "DP" => Box::new(dp_ai::DpAI::new(8, 10)),
         x => bail!("'{x}' is not a HeadAI"),
     };
     let mut chained_ais = vec![];

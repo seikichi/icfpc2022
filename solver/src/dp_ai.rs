@@ -30,7 +30,9 @@ impl HeadAI for DpAI {
         // dp
         let d = self.memo.len();
         let (_score, program) = self.calc(0, 0, d, d, 0);
-        return self.renumber_block_id(&mut vec![program]);
+        let result = self.renumber_block_id(&mut vec![program]);
+        // println!("{}", result);
+        return result;
     }
 }
 impl DpAI {
@@ -51,7 +53,6 @@ impl DpAI {
     }
     fn calc(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> (i64, Program) {
         let d = self.memo.len();
-        // println!("{} {} {} {} {}", x, y, w, h, color_id);
         assert!(x + w <= d);
         assert!(y + h <= d);
         if let Some(ret) = self.memo[x][y][w][h][color_id].clone() {
@@ -73,7 +74,7 @@ impl DpAI {
             if c != color_id {
                 nprogram.0.push(Move::Color {
                     block_id: BlockId::new(&vec![]),
-                    color: self.sampled_color[color_id],
+                    color: self.sampled_color[c],
                 });
                 ncost += simulator::move_cost(
                     &state,
@@ -91,6 +92,7 @@ impl DpAI {
                 );
                 if ncost + scost < ret.0 {
                     // assert!(ncost + scost > 100);
+                    assert!(nprogram.0.len() == 1);
                     ret.0 = ncost + scost;
                     ret.1 = nprogram.clone();
                 }
@@ -114,7 +116,6 @@ impl DpAI {
                         nlcost += nret.0;
                         nlprogram.push(nret.1);
                     }
-                    // println!("{} {} {}", ret.0, ncost + nlcost, nprogram);
                     if ncost + nlcost < ret.0 {
                         ret.0 = ncost + nlcost;
                         // assert!(ncost + nlcost > 100);
@@ -135,7 +136,10 @@ impl DpAI {
             // }
         }
         self.memo[x][y][w][h][color_id] = Some(ret.clone());
-        // println!("{} {} {} {} {} {} {:?}", x, y, w, h, color_id, ret.0, state);
+        // println!(
+        //     "{} {} {} {} {} {} {:?} {}",
+        //     x, y, w, h, color_id, ret.0, state, ret.1
+        // );
         return ret;
     }
 
