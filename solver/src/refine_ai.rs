@@ -3,6 +3,8 @@ use crate::isl::*;
 use crate::simulator;
 use crate::simulator::calc_score;
 use crate::simulator::simulate;
+use crate::simulator::simulate_partial;
+use crate::simulator::SimpleBlock;
 use rand::Rng;
 
 pub struct RefineAi {
@@ -22,6 +24,9 @@ impl RefineAi {
         for iter in 0..100 {
             let mut next_program = prev_program.clone();
             let t = rng.gen_range(0..next_program.0.len());
+            let mut state =
+                simulator::State::initial_state(image.width() as i32, image.height() as i32);
+            simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
             match next_program.0[t] {
                 Move::PCut {
                     ref block_id,
@@ -43,6 +48,26 @@ impl RefineAi {
                 } => {
                     // TODO
                     continue;
+                }
+                Move::Color {
+                    ref block_id,
+                    color,
+                } => {
+                    let block = state.blocks[block_id];
+                    let r = rng.gen_range(0..2);
+                    let color = if r == 0 {
+                        // random sampling
+                        let x = block.p.x + rng.gen_range(0..block.size.x);
+                        let y = block.p.y + rng.gen_range(0..block.size.y);
+                        image.0[y as usize][x as usize]
+                    } else {
+                        // average
+                        image.average(block.p, block.size)
+                    };
+                    next_program.0[t] = Move::Color {
+                        block_id: block_id.clone(),
+                        color,
+                    };
                 }
                 _ => {
                     // Do nothing
