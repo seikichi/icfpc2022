@@ -18,7 +18,11 @@ pub fn program_exec_error(line_number: usize, mv: Move, state: &State) -> Progra
         Move::Color { ref block_id, .. } => state.blocks.get(block_id).cloned(),
         _ => None,
     };
-    ProgramExecError { line_number, mv, block }
+    ProgramExecError {
+        line_number,
+        mv,
+        block,
+    }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -326,7 +330,8 @@ pub fn calc_score(program: &Program, target_image: &Image) -> Result<i64, Progra
         let mv = &program.0[line_number];
         cost += move_cost(&state, &mv, w, h)
             .ok_or_else(|| program_exec_error(line_number + 1, mv.clone(), &state))?;
-        simulate(&mut state, mv).ok_or_else(|| program_exec_error(line_number + 1, mv.clone(), &state))?;
+        simulate(&mut state, mv)
+            .ok_or_else(|| program_exec_error(line_number + 1, mv.clone(), &state))?;
     }
     cost += calc_state_similarity(&state, target_image);
     Ok(cost)

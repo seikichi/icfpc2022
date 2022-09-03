@@ -85,7 +85,13 @@ impl ChainedAI for AnnealingAI {
                         // 動かせない
                         continue;
                     }
-                    eprintln!("LCut {} {}: {} -> {}", block_id, orientation, line_number, next.unwrap());
+                    eprintln!(
+                        "LCut {} {}: {} -> {}",
+                        block_id,
+                        orientation,
+                        line_number,
+                        next.unwrap()
+                    );
                     Move::LCut {
                         block_id: block_id.clone(),
                         orientation,
@@ -131,7 +137,7 @@ impl ChainedAI for AnnealingAI {
 
             let new_score = match self.calc_ann_score(&mut solution, image) {
                 Ok(x) => x,
-                Err(e) => {
+                Err(_) => {
                     eprintln!("failed to move.. rollback.");
                     solution.0[i_chosen] = old;
                     continue;
