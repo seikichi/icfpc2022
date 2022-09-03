@@ -41,16 +41,14 @@ impl Image {
             .into_iter()
             .map(|row| {
                 row.chars()
-                    .map(|c| {
-                        match c {
-                            '.' => Color::ONE,
-                            '#' => Color::new(0.0, 0.0, 0.0, 1.0),
-                            'r' => Color::new(1.0, 0.0, 0.0, 1.0),
-                            'g' => Color::new(0.0, 1.0, 0.0, 1.0),
-                            'b' => Color::new(0.0, 0.0, 1.0, 1.0),
-                            'z' => Color::ZERO,
-                            _ => Color::new(0.5, 0.5, 0.5, 1.0),
-                        }
+                    .map(|c| match c {
+                        '.' => Color::ONE,
+                        '#' => Color::new(0.0, 0.0, 0.0, 1.0),
+                        'r' => Color::new(1.0, 0.0, 0.0, 1.0),
+                        'g' => Color::new(0.0, 1.0, 0.0, 1.0),
+                        'b' => Color::new(0.0, 0.0, 1.0, 1.0),
+                        'z' => Color::ZERO,
+                        _ => Color::new(0.5, 0.5, 0.5, 1.0),
                     })
                     .collect::<Vec<_>>()
             })

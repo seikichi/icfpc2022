@@ -275,24 +275,40 @@ mod tests {
     use glam::IVec2;
 
     #[test]
-    fn test_simulate() {
+    fn test_simulate_pcut() {
         let mut state = State::initial_state(5, 3);
-        simulate(&mut state, &Move::PCut {
-            block_id: BlockId(vec![0]),
-            point: Point::new(2, 1),
-        }).unwrap();
-        simulate(&mut state, &Move::Color {
-            block_id: BlockId(vec![0, 0]),
-            color: Color::new(1.0, 0.0, 0.0, 1.0),
-        }).unwrap();
-        simulate(&mut state, &Move::Color {
-            block_id: BlockId(vec![0, 2]),
-            color: Color::new(0.0, 1.0, 0.0, 1.0),
-        }).unwrap();
-        simulate(&mut state, &Move::Color {
-            block_id: BlockId(vec![0, 3]),
-            color: Color::new(0.0, 0.0, 1.0, 1.0),
-        }).unwrap();
+        simulate(
+            &mut state,
+            &Move::PCut {
+                block_id: BlockId(vec![0]),
+                point: Point::new(2, 1),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId(vec![0, 0]),
+                color: Color::new(1.0, 0.0, 0.0, 1.0),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId(vec![0, 2]),
+                color: Color::new(0.0, 1.0, 0.0, 1.0),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId(vec![0, 3]),
+                color: Color::new(0.0, 0.0, 1.0, 1.0),
+            },
+        )
+        .unwrap();
 
         #[rustfmt::skip]
         let expected = Image::from_string_array(&[
@@ -302,6 +318,48 @@ mod tests {
         ]);
 
         let actual = rasterize_state(&state, 5, 3);
+
+        eprint!("actual:\n{}", actual);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_simulate_swap() {
+        let mut state = State::initial_state(4, 3);
+        simulate(
+            &mut state,
+            &Move::LCut {
+                block_id: BlockId(vec![0]),
+                orientation: Orientation::Vertical,
+                line_number: 2,
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId(vec![0, 0]),
+                color: Color::new(1.0, 0.0, 0.0, 1.0),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Swap {
+                a: BlockId(vec![0, 0]),
+                b: BlockId(vec![0, 1]),
+            },
+        )
+        .unwrap();
+
+        #[rustfmt::skip]
+        let expected = Image::from_string_array(&[
+            "..rr",
+            "..rr",
+            "..rr",
+        ]);
+
+        let actual = rasterize_state(&state, 4, 3);
 
         eprint!("actual:\n{}", actual);
         assert_eq!(expected, actual);
@@ -339,14 +397,16 @@ mod tests {
                 orientation: Orientation::Vertical,
                 line_number: 2,
             },
-        ).unwrap();
+        )
+        .unwrap();
         simulate(
             &mut state,
             &Move::Color {
                 block_id: BlockId(vec![0, 1]),
                 color: red,
             },
-        ).unwrap();
+        )
+        .unwrap();
         // ..rrr
         // ..rrr
         // ..rrr
@@ -373,11 +433,15 @@ mod tests {
     fn test_move_cost() {
         //pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32>
         let mut state = State::initial_state(5, 3);
-        simulate(&mut state, &Move::LCut {
-            block_id: BlockId(vec![0]),
-            orientation: Orientation::Vertical,
-            line_number: 2,
-        }).unwrap();
+        simulate(
+            &mut state,
+            &Move::LCut {
+                block_id: BlockId(vec![0]),
+                orientation: Orientation::Vertical,
+                line_number: 2,
+            },
+        )
+        .unwrap();
         let mv = Move::Color {
             block_id: BlockId(vec![0, 1]),
             color: Color::ZERO,
