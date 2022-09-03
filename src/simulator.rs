@@ -219,7 +219,7 @@ pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
 }
 
 #[allow(dead_code)]
-fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
+pub fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
     return rasterize_parital_state(
         Point::new(0, 0),
         Point::new(w as i32, h as i32),

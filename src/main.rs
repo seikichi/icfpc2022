@@ -21,5 +21,17 @@ fn main() {
     let solver = ai::CrossAI { size: 3 };
     let program = solver.solve(&img);
 
+    if let Some(score) = simulator::calc_score(&program, &img) {
+        println!("score: {}", score);
+    } else {
+        println!("score: Invalid program");
+    }
+    let mut state = simulator::State::initial_state(img.width() as i32, img.height() as i32);
+    for mv in program.0.iter() {
+        simulator::simulate(&mut state, mv);
+    }
+    let _output_image = simulator::rasterize_state(&state, img.width(), img.height());
+    // _output_image.save("result.png");
+
     fs::write(output_path, format!("{program}")).unwrap();
 }
