@@ -103,8 +103,8 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             let p = simple_block.p;
             let mut dx = [0, 0];
             let mut dy = [0, 0];
-            let mut nh = [simple_block.size.x, simple_block.size.x];
-            let mut nw = [simple_block.size.y, simple_block.size.y];
+            let mut nw = [simple_block.size.x, simple_block.size.x];
+            let mut nh = [simple_block.size.y, simple_block.size.y];
             match orientation {
                 Orientation::Horizontal => {
                     if line_number <= 0 || simple_block.size.y <= line_number {
@@ -181,7 +181,7 @@ pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
             unimplemented!()
         }
     };
-    return Some(base * ((w * h) as f32 / (size.x * size.y) as f32).round());
+    Some((base * (w * h) as f32 / (size.x * size.y) as f32).round())
 }
 
 #[allow(dead_code)]
@@ -318,5 +318,23 @@ mod tests {
 
         let actuall = calc_state_similarity(&state, &target_image);
         assert_eq!(expected_similarity, actuall);
+    }
+
+    #[test]
+    fn test_move_cost() {
+        //pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32>
+        let mut state = State::initial_state(5, 3);
+        simulate(&mut state, &Move::LCut {
+            block_id: BlockId(vec![0]),
+            orientation: Orientation::Vertical,
+            line_number: 2,
+        });
+        let mv = Move::Color {
+            block_id: BlockId(vec![0, 1]),
+            color: Color::ZERO,
+        };
+        let actual = move_cost(&state, &mv, 5, 3).unwrap();
+        let expected = (5.0f32 * (5.0 * 3.0) / (3.0 * 3.0)).round();
+        assert_eq!(expected, actual);
     }
 }
