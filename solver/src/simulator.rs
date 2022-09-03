@@ -341,6 +341,100 @@ mod tests {
     }
 
     #[test]
+    fn test_simulate_pcut_twice() {
+        let mut state = State::initial_state(8, 8);
+        simulate(
+            &mut state,
+            &Move::PCut {
+                block_id: BlockId(vec![0]),
+                point: Point::new(4, 4),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::PCut {
+                block_id: BlockId(vec![0, 1]),
+                point: Point::new(6, 2),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId(vec![0, 1, 0]),
+                color: Color::new(0.0, 1.0, 0.0, 1.0),
+            },
+        )
+        .unwrap();
+
+        #[rustfmt::skip]
+        let expected = Image::from_string_array(&[
+            "....gg..",
+            "....gg..",
+            "........",
+            "........",
+            "........",
+            "........",
+            "........",
+            "........",
+        ]);
+
+        let actual = rasterize_state(&state, 8, 8);
+
+        eprint!("actual:\n{}", actual);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_simulate_lcut_twice() {
+        let mut state = State::initial_state(8, 8);
+        simulate(
+            &mut state,
+            &Move::LCut {
+                block_id: BlockId(vec![0]),
+                orientation: Orientation::Horizontal,
+                line_number: 4,
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::LCut {
+                block_id: BlockId(vec![0, 1]),
+                orientation: Orientation::Horizontal,
+                line_number: 6,
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId(vec![0, 1, 0]),
+                color: Color::new(0.0, 1.0, 0.0, 1.0),
+            },
+        )
+        .unwrap();
+
+        #[rustfmt::skip]
+        let expected = Image::from_string_array(&[
+            "........",
+            "........",
+            "........",
+            "........",
+            "gggggggg",
+            "gggggggg",
+            "........",
+            "........",
+        ]);
+
+        let actual = rasterize_state(&state, 8, 8);
+
+        eprint!("actual:\n{}", actual);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
     fn test_simulate_swap() {
         let mut state = State::initial_state(4, 3);
         simulate(
