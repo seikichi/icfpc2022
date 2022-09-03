@@ -1,9 +1,9 @@
+use crate::ai;
 use crate::image;
 use crate::isl::*;
 use crate::simulator;
 use crate::simulator::calc_score;
 use crate::simulator::simulate_partial;
-use crate::ai;
 use rand::Rng;
 
 pub struct RefineAi {
