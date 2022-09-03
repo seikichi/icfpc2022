@@ -29,6 +29,9 @@ impl SimpleBlock {
         if !self.active {
             return;
         }
+        if self.color == INVALID_COLOR {
+            panic!("This block has INVALID_COLOR, which cannot be rasterized");
+        }
         let w = std::cmp::min((p.x + size.x) as usize, image.width());
         let h = std::cmp::min((p.y + size.y) as usize, image.height());
         let t = std::cmp::max(p.y as usize, self.p.y as usize);
@@ -172,7 +175,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             state.blocks.insert(a.clone(), block1);
             state.blocks.insert(b.clone(), block2);
         }
-        Move::Merge { a: ref a, b: ref b } => {
+        Move::Merge { ref a, ref b } => {
             let mut a = a;
             let mut b = b;
             let mut block1 = state.blocks.get(a)?.clone();
@@ -193,7 +196,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 Point::new(block1.size.x + block2.size.x, block1.size.y)
             };
             // TODO Colorが混ざるので ComplexBlock にする
-            let next_block = SimpleBlock::new(block1.p, next_size, Color::ZERO);
+            let next_block = SimpleBlock::new(block1.p, next_size, INVALID_COLOR);
             state
                 .blocks
                 .insert(BlockId(vec![state.next_global_id]), next_block);
@@ -202,7 +205,6 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             block2.active = false;
             state.blocks.insert(a.clone(), block1);
             state.blocks.insert(b.clone(), block2);
-            unimplemented!()
         }
     }
     Some(())
@@ -210,10 +212,8 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
 
 pub fn simulate_all(program: &Program, img: &Image) -> Option<State> {
     let mut state = State::initial_state(img.width() as i32, img.height() as i32);
-    if let Some(result) = simulate_partial(&mut state, &program.0) {
-        return Some(state);
-    }
-    return None;
+    simulate_partial(&mut state, &program.0)?;
+    Some(state)
 }
 
 pub fn simulate_partial(state: &mut State, program: &[Move]) -> Option<()> {
@@ -509,6 +509,88 @@ mod tests {
         ]);
 
         let actual = rasterize_state(&state, 4, 3);
+
+        eprint!("actual:\n{}", actual);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_simulate_merge_vertically() {
+        let mut state = State::initial_state(5, 3);
+        simulate(
+            &mut state,
+            &Move::PCut {
+                block_id: BlockId(vec![0]),
+                point: Point::new(2, 1),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Merge {
+                a: BlockId(vec![0, 0]),
+                b: BlockId(vec![0, 3]),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId(vec![1]),
+                color: Color::new(1.0, 0.0, 0.0, 1.0),
+            },
+        )
+        .unwrap();
+
+        #[rustfmt::skip]
+        let expected = Image::from_string_array(&[
+            "rr...",
+            "rr...",
+            "rr...",
+        ]);
+
+        let actual = rasterize_state(&state, 5, 3);
+
+        eprint!("actual:\n{}", actual);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_simulate_merge_horizontally() {
+        let mut state = State::initial_state(5, 3);
+        simulate(
+            &mut state,
+            &Move::PCut {
+                block_id: BlockId(vec![0]),
+                point: Point::new(2, 1),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Merge {
+                a: BlockId(vec![0, 2]),
+                b: BlockId(vec![0, 3]),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId(vec![1]),
+                color: Color::new(1.0, 0.0, 0.0, 1.0),
+            },
+        )
+        .unwrap();
+
+        #[rustfmt::skip]
+        let expected = Image::from_string_array(&[
+            ".....",
+            "rrrrr",
+            "rrrrr",
+        ]);
+
+        let actual = rasterize_state(&state, 5, 3);
 
         eprint!("actual:\n{}", actual);
         assert_eq!(expected, actual);
