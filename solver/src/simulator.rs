@@ -86,6 +86,29 @@ impl State {
     }
 }
 
+pub fn merge_block(block1: &SimpleBlock, block2: &SimpleBlock) -> Option<SimpleBlock> {
+    let mut block1 = block1.clone();
+    let mut block2 = block2.clone();
+    if block1.p.x > block2.p.x || block1.p.y > block2.p.y {
+        std::mem::swap(&mut block1, &mut block2);
+        // std::mem::swap(&mut a, &mut b);
+    }
+    let next_size = if block1.p.x == block2.p.x {
+        if block1.size.x != block2.size.x || block1.p.y + block1.size.y != block2.p.y {
+            return None;
+        }
+        Point::new(block1.size.x, block1.size.y + block2.size.y)
+    } else {
+        if block1.size.y != block2.size.y || block1.p.x + block1.size.x != block2.p.x {
+            return None;
+        }
+        Point::new(block1.size.x + block2.size.x, block1.size.y)
+    };
+    // TODO Colorが混ざるので ComplexBlock にする
+    let next_block = SimpleBlock::new(block1.p, next_size, INVALID_COLOR);
+    return Some(next_block);
+}
+
 #[allow(dead_code)]
 #[must_use]
 pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
@@ -197,27 +220,10 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             state.blocks.insert(b.clone(), block2);
         }
         Move::Merge { ref a, ref b } => {
-            let mut a = a;
-            let mut b = b;
             let mut block1 = state.blocks.get(a)?.clone();
             let mut block2 = state.blocks.get(b)?.clone();
-            if block1.p.x > block2.p.x || block1.p.y > block2.p.y {
-                std::mem::swap(&mut block1, &mut block2);
-                std::mem::swap(&mut a, &mut b);
-            }
-            let next_size = if block1.p.x == block2.p.x {
-                if block1.size.x != block2.size.x || block1.p.y + block1.size.y != block2.p.y {
-                    return None;
-                }
-                Point::new(block1.size.x, block1.size.y + block2.size.y)
-            } else {
-                if block1.size.y != block2.size.y || block1.p.x + block1.size.x != block2.p.x {
-                    return None;
-                }
-                Point::new(block1.size.x + block2.size.x, block1.size.y)
-            };
+            let next_block = merge_block(&block1, &block2)?;
             // TODO Colorが混ざるので ComplexBlock にする
-            let next_block = SimpleBlock::new(block1.p, next_size, INVALID_COLOR);
             state
                 .blocks
                 .insert(BlockId::new(&vec![state.next_global_id]), next_block);
