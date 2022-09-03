@@ -19,6 +19,9 @@ impl ai::ChainedAI for RefineAi {
         let mut prev_program = initial_program.clone();
         for iter in 0..50000 {
             let mut next_program = prev_program.clone();
+            if next_program.0.len() == 0 {
+                break;
+            }
             let t = rng.gen_range(0..next_program.0.len());
             let mv = next_program.0[t].clone();
             match mv {

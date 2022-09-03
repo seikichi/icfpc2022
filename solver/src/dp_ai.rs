@@ -11,6 +11,7 @@ use rand::Rng;
 
 pub struct DpAI {
     rng: ThreadRng,
+    sample_color_num: usize,
     sampled_color: Vec<Color>,
     memo: Vec<Vec<Vec<Vec<Vec<Option<(i64, Program)>>>>>>,
     image: image::Image,
@@ -20,12 +21,27 @@ impl HeadAI for DpAI {
     fn solve(&mut self, image: &image::Image) -> Program {
         // color sampling
         self.image = image.clone();
-        self.sampled_color[0] = Color::ONE;
-        for i in 1..self.sampled_color.len() {
-            // TODO 分散が大きくなるようにする
+        self.sampled_color.push(Color::ONE);
+        for _i in 0..1000000 {
+            // 近い色は避けてサンプルの色を何個か取得する
             let x = self.rng.gen_range(0..self.image.width());
             let y = self.rng.gen_range(0..self.image.height());
-            self.sampled_color[i] = self.image.0[y][x];
+            let c = self.image.0[y][x];
+            let mut ng = false;
+            for &pc in self.sampled_color.iter() {
+                if ((pc - c) * 255.0).length() < 30.0 {
+                    ng = true;
+                    break;
+                }
+            }
+            if ng {
+                continue;
+            }
+            println!("{}", _i);
+            self.sampled_color.push(c);
+            if self.sampled_color.len() == self.sample_color_num {
+                break;
+            }
         }
         // dp
         let d = self.memo.len();
@@ -46,7 +62,8 @@ impl DpAI {
         ];
         DpAI {
             rng: rand::thread_rng(),
-            sampled_color: vec![Color::ONE; sample_color_num],
+            sample_color_num,
+            sampled_color: vec![],
             memo,
             image: image::Image::new(1, 1),
         }
