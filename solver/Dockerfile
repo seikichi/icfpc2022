@@ -11,6 +11,7 @@ COPY Cargo.lock Cargo.toml /code/
 COPY src /code/src
 RUN cargo build --release
 
+COPY problems /code/problems
 COPY lambda.js ${LAMBDA_TASK_ROOT}
 
 CMD ["lambda.handler"]
