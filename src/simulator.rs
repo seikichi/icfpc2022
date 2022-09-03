@@ -264,11 +264,6 @@ pub fn calc_score(program: &Program, target_image: &Image) -> Option<f32> {
     return Some(cost);
 }
 
-#[test]
-fn test_simulate() {
-    // TODO
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
