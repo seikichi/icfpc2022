@@ -84,8 +84,12 @@ async fn main() -> anyhow::Result<()> {
         .to_string_lossy()
         .to_string();
 
+    let mut score_history = vec![];
+
     let img = image::open(opt.input_path.clone())?;
     let mut program = head_ai.solve(&img);
+
+    score_history.push(simulator::calc_score(&program, &img)?);
 
     let initial_state = initial_config::load_inistal_state(
         &opt.input_path
@@ -99,11 +103,15 @@ async fn main() -> anyhow::Result<()> {
 
     for mut chained_ai in chained_ais {
         program = chained_ai.solve(&img, &program);
+        score_history.push(simulator::calc_score(&program, &img)?);
+    }
+
+    println!("Score History:");
+    for (i, score) in score_history.iter().enumerate() {
+        println!("    {i}: {score}")
     }
 
     let score = simulator::calc_score(&program, &img)?;
-
-    println!("score: {}", score);
     let state = simulator::simulate_all(&program, &img)?;
     let output_image = simulator::rasterize_state(&state, img.width(), img.height());
 
