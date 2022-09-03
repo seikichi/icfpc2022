@@ -28,6 +28,11 @@ struct Opt {
 
     #[structopt(short = "o", long = "output-dir", parse(from_os_str))]
     output_dir: PathBuf,
+
+    // Lambda で同パラメーターで複数の問題に対して並列実行する時、
+    // 最初に適当な run-id を採番して、それがここに渡ってくる (妄想)
+    #[structopt(short = "r", long = "run-id")]
+    run_id: Option<String>,
 }
 
 fn parse_ai_string(ai_str: &str) -> anyhow::Result<(Box<dyn HeadAI>, Vec<Box<dyn ChainedAI>>)> {
@@ -85,16 +90,18 @@ async fn main() -> anyhow::Result<()> {
 
     let output_image_filename = opt.output_dir.join(problem_id.clone() + ".png");
     println!("output PNG to: {}", output_image_filename.to_string_lossy());
-    output_image.save(output_image_filename)?;
+    output_image.save(output_image_filename.clone())?;
 
-    // db::save(
-    //     "482eb33b-b510-4e06-bec9-9222159deaee",
-    //     problem_id,
-    //     &program,
-    //     score,
-    //     "result.png",
-    // )
-    // .await?;
+    if let Some(run_id) = opt.run_id {
+        db::save(
+            &run_id,
+            &problem_id,
+            &program,
+            score,
+            &output_image_filename.to_string_lossy(),
+        )
+        .await?;
+    }
 
     Ok(())
 }

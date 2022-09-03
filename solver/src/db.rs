@@ -7,7 +7,7 @@ use aws_sdk_s3::types::ByteStream;
 
 pub async fn save(
     run_id: &str,
-    problem_id: u32,
+    problem_id: &str,
     program: &isl::Program,
     score: i64,
     image_path: &str,

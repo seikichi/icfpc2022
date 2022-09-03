@@ -1,13 +1,22 @@
 import * as cdk from "aws-cdk-lib";
 import { Construct } from "constructs";
+import * as lambda from "aws-cdk/aws-lambda";
 import * as dynamodb from "aws-cdk-lib/aws-dynamodb";
 import * as s3 from "aws-cdk-lib/aws-s3";
 import * as cloudfront from "aws-cdk-lib/aws-cloudfront";
 import * as iam from "aws-cdk-lib/aws-iam";
 
+import * as child_process from "child_process";
+
 export class InfraStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
+
+    // get commit hash
+    const commitHash = child_process
+      .execSync("git rev-parse --short HEAD")
+      .toString()
+      .trim();
 
     // DB
     const STRING = dynamodb.AttributeType.STRING;
@@ -23,6 +32,15 @@ export class InfraStack extends cdk.Stack {
       partitionKey: { name: "GSI1PK", type: STRING },
       sortKey: { name: "GSI1SK", type: NUMBER },
     });
+
+    // Lambda
+    const solver = new lambda.DockerImageFunction(this, "Solver", {
+      code: lambda.DockerImageCode.fromImageAsset("../solver"),
+      timeout: cdk.Duration.minutes(15),
+      memorySize: 1024,
+      environment: { COMMIT: commitHash },
+    });
+    table.grantReadWriteData(solver);
 
     // File
     const bucket = new s3.Bucket(this, "Bucket", {
