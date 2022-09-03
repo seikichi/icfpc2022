@@ -5,7 +5,13 @@ use aws_sdk_dynamodb::model::AttributeValue;
 use aws_sdk_s3 as s3;
 use aws_sdk_s3::types::ByteStream;
 
-async fn save(run_id: &str, problem_id: u32, program: &isl::Program, score: i64, image_path: &str) {
+async fn save(
+    run_id: &str,
+    problem_id: u32,
+    program: &isl::Program,
+    score: i64,
+    image_path: &str,
+) -> anyhow::Result<()> {
     let table_name = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
     let bucket_name = "infrastack-bucket83908e77-vvxulc74xyib";
 
@@ -23,10 +29,9 @@ async fn save(run_id: &str, problem_id: u32, program: &isl::Program, score: i64,
         .item("PK", AttributeValue::S(pk))
         .item("SK", AttributeValue::S(sk))
         .item("GSI1PK", AttributeValue::S(gsi1pk))
-        .item("GSI1Sk", AttributeValue::N(gsi1sk))
+        .item("GSI1SK", AttributeValue::N(gsi1sk))
         .send()
-        .await
-        .unwrap();
+        .await?;
 
     let client = s3::Client::new(&config);
     client
@@ -35,8 +40,7 @@ async fn save(run_id: &str, problem_id: u32, program: &isl::Program, score: i64,
         .key(format!("{}/{}.isl", run_id, problem_id).to_string())
         .body(ByteStream::from(format!("{program}").into_bytes()))
         .send()
-        .await
-        .unwrap();
+        .await?;
 
     let client = s3::Client::new(&config);
     client
@@ -45,6 +49,7 @@ async fn save(run_id: &str, problem_id: u32, program: &isl::Program, score: i64,
         .key(format!("{}/{}.png", run_id, problem_id).to_string())
         .body(ByteStream::from_path(image_path).await.unwrap())
         .send()
-        .await
-        .unwrap();
+        .await?;
+
+    Ok(())
 }
