@@ -68,26 +68,27 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
         } => {
             let mut simple_block = state.blocks.get(block_id)?.clone();
             let p = simple_block.p;
-            if point.x <= 0
-                || point.x >= simple_block.size.x
-                || point.y <= 0
-                || point.y >= simple_block.size.y
+            let offset = *point - p;
+            if offset.x <= 0
+                || offset.x >= simple_block.size.x
+                || offset.y <= 0
+                || offset.y >= simple_block.size.y
             {
                 return None;
             }
-            let dx = [0, point.x, point.x, 0];
-            let dy = [0, 0, point.y, point.y];
+            let dx = [0, offset.x, offset.x, 0];
+            let dy = [0, 0, offset.y, offset.y];
             let nw = [
-                point.x,
-                simple_block.size.x - point.x,
-                simple_block.size.x - point.x,
-                point.x,
+                offset.x,
+                simple_block.size.x - offset.x,
+                simple_block.size.x - offset.x,
+                offset.x,
             ];
             let nh = [
-                point.y,
-                point.y,
-                simple_block.size.y - point.y,
-                simple_block.size.y - point.y,
+                offset.y,
+                offset.y,
+                simple_block.size.y - offset.y,
+                simple_block.size.y - offset.y,
             ];
             for i in 0..4 {
                 let nx = p.x + dx[i];
@@ -109,27 +110,30 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
             orientation,
             line_number,
         } => {
-            let line_number = *line_number;
             let mut simple_block = state.blocks.get(block_id)?.clone();
             let p = simple_block.p;
+            let offset = match orientation {
+                Orientation::Horizontal => *line_number - p.y,
+                Orientation::Vertical => *line_number - p.x,
+            };
             let mut dx = [0, 0];
             let mut dy = [0, 0];
             let mut nw = [simple_block.size.x, simple_block.size.x];
             let mut nh = [simple_block.size.y, simple_block.size.y];
             match orientation {
                 Orientation::Horizontal => {
-                    if line_number <= 0 || simple_block.size.y <= line_number {
+                    if offset <= 0 || simple_block.size.y <= offset {
                         return None;
                     }
-                    dy = [0, line_number];
-                    nh = [line_number, simple_block.size.y - line_number];
+                    dy = [0, offset];
+                    nh = [offset, simple_block.size.y - offset];
                 }
                 Orientation::Vertical => {
-                    if line_number <= 0 || simple_block.size.x <= line_number {
+                    if offset <= 0 || simple_block.size.x <= offset {
                         return None;
                     }
-                    dx = [0, line_number];
-                    nw = [line_number, simple_block.size.x - line_number];
+                    dx = [0, offset];
+                    nw = [offset, simple_block.size.x - offset];
                 }
             }
             for i in 0..2 {
