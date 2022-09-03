@@ -174,6 +174,19 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
     Some(())
 }
 
+pub fn simulate_all(program: &Program, img: &Image) -> Option<State> {
+    let mut state = State::initial_state(img.width() as i32, img.height() as i32);
+    for line_number in 0..program.0.len() {
+        let mv = &program.0[line_number];
+        let result = simulate(&mut state, mv);
+        if result.is_none() {
+            eprintln!("line {}: {} is invalid", line_number, mv);
+            return None;
+        }
+    }
+    return Some(state);
+}
+
 pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32> {
     let (base, size) = match mv {
         Move::PCut {
@@ -256,9 +269,14 @@ pub fn calc_score(program: &Program, target_image: &Image) -> Option<f32> {
     let w = target_image.width();
     let mut state = State::initial_state(w as i32, h as i32);
     let mut cost = 0.0;
-    for mv in program.0.iter() {
-        cost += move_cost(&state, mv, w, h)?;
-        simulate(&mut state, mv)?;
+    for line_number in 0..program.0.len() {
+        let mv = &program.0[line_number];
+        cost += move_cost(&state, &mv, w, h)?;
+        let result = simulate(&mut state, mv);
+        if result.is_none() {
+            eprintln!("line {}: {} is invalid", line_number, mv);
+            return None;
+        }
     }
     cost += calc_state_similarity(&state, target_image);
     return Some(cost);
