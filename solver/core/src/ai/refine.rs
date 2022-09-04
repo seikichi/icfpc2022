@@ -74,6 +74,7 @@ impl ai::ChainedAI for RefineAi {
                         // new_score >= current_score
                         let delta = (new_score - current_score) as f64;
                         let accept_prob = (-delta / temperature).exp();
+                        // log::debug!("{} {:.4} {}", delta, accept_prob, description);
                         rng.gen::<f64>() < accept_prob
                     }
                 }

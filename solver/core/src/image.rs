@@ -160,6 +160,7 @@ pub fn k_means_color_sampling(
         image.0[y][x]
     };
     initial_samples.push(c);
+    let mut iter = 0;
     while initial_samples.len() < n_colors {
         // 最も近いサンプルまでの二乗距離
         let mut nsd = vec![vec![0.0; w]; h];
@@ -188,6 +189,10 @@ pub fn k_means_color_sampling(
                     break 'outer;
                 }
             }
+        }
+        iter += 1;
+        if iter == 100 {
+            break;
         }
     }
 
