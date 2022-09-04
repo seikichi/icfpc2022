@@ -1,9 +1,9 @@
-use std::{collections::VecDeque, fmt::Display};
+use std::fmt::Display;
 
 use glam::{IVec2, Vec4};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct BlockId(pub VecDeque<u32>);
+pub struct BlockId(pub Vec<u32>);
 impl Display for BlockId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut ret = String::new();
@@ -18,10 +18,10 @@ impl Display for BlockId {
 }
 impl BlockId {
     pub fn default() -> Self {
-        BlockId(VecDeque::with_capacity(0))
+        BlockId(Vec::with_capacity(0))
     }
     pub fn new(id: &[u32]) -> Self {
-        BlockId(VecDeque::from_iter(id.iter().copied()))
+        BlockId(Vec::from_iter(id.iter().copied()))
     }
     pub fn is_child(&self, target: &BlockId) -> bool {
         if self.0.len() >= target.0.len() {
@@ -33,13 +33,6 @@ impl BlockId {
             }
         }
         return true;
-    }
-    // BlockIdの先頭をidに書き換える
-    pub fn convert_initial_block_id(&mut self, id: &BlockId) {
-        self.0.pop_front();
-        let mut temp = self.0.clone();
-        self.0 = id.0.clone();
-        self.0.append(&mut temp);
     }
 }
 
@@ -196,28 +189,5 @@ impl Program {
     #[allow(dead_code)]
     pub fn len(&self) -> usize {
         return self.0.len();
-    }
-    #[allow(dead_code)]
-    pub fn convert_initial_block_id(&mut self, id: &BlockId) {
-        for mv in self.0.iter_mut() {
-            match mv {
-                Move::PCut { block_id, .. } => {
-                    block_id.convert_initial_block_id(&id);
-                }
-                Move::LCut { block_id, .. } => {
-                    block_id.convert_initial_block_id(&id);
-                }
-                Move::Color { block_id, .. } => {
-                    block_id.convert_initial_block_id(&id);
-                }
-                Move::Swap { a, b } => {
-                    a.convert_initial_block_id(&id);
-                    b.convert_initial_block_id(&id);
-                }
-                Move::Merge { .. } => {
-                    panic!("Can't use Merge")
-                }
-            }
-        }
     }
 }
