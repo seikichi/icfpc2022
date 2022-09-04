@@ -16,7 +16,7 @@ const TableName = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
 const TOKEN = process.env.TOKEN!;
 const client = new DynamoDBClient({ region });
 
-const MAX_PROBLEM_ID = 35;
+const MAX_PROBLEM_ID = 40;
 
 (async () => {
   for (let problemId = 1; problemId <= MAX_PROBLEM_ID; problemId++) {

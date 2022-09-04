@@ -15,7 +15,7 @@ import MuiLink from "@mui/material/Link";
 import { fetchRun, fetchSolutionList, RunResult, Solution } from "../../lib/db";
 import React from "react";
 
-const NUM_PROBLEMS = 35;
+const NUM_PROBLEMS = 40;
 
 const Page: NextPage = () => {
   const ids = Array.from(new Array(NUM_PROBLEMS), (_, i) => i);

@@ -5,6 +5,7 @@ mod dp;
 mod grid;
 mod merge;
 mod onecolor;
+mod rect;
 mod refine;
 mod swap;
 
@@ -15,6 +16,7 @@ pub use dp::*;
 pub use grid::*;
 pub use merge::*;
 pub use onecolor::*;
+pub use rect::*;
 pub use refine::*;
 pub use swap::*;
 
