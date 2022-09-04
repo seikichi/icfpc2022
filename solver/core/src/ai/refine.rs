@@ -12,6 +12,8 @@ use crate::simulator::State;
 use log::info;
 use rand::Rng;
 
+use super::HeadAI;
+
 pub enum OptimizeAlgorithm {
     HillClimbing,
     Annealing,
@@ -106,80 +108,92 @@ impl RefineAi {
         let mut next_program = prev_program.clone();
         let t = rng.gen_range(0..next_program.0.len());
         let mv = next_program.0[t].clone();
-        match mv {
-            // TODO swap color timing
-            Move::PCut {
-                ref block_id,
-                point,
-            } => {
-                let r = rng.gen_range(0..2);
-                if r == 0 {
-                    // change PCut point
-                    let dx = rng.gen_range(-5..=5);
-                    let dy = rng.gen_range(-5..=5);
-                    let npoint = Point::new(point.x + dx, point.y + dy);
-                    next_program.0[t] = Move::PCut {
-                        block_id: block_id.clone(),
-                        point: npoint,
-                    };
-                } else if r == 1 {
-                    next_program.0.remove(t);
-                    if let Some(result) = Self::remove_all_child(&next_program, block_id) {
-                        next_program = result;
-                    } else {
-                        return None;
+        if rng.gen_range(0..10) == 0 {
+            let mut state = initial_state.clone();
+            let end_state = simulator::simulate_all(&prev_program, &mut state).unwrap();
+            let block_id = end_state.sample_active_block(rng);
+            let d = rng.gen_range(2..=4);
+            let c = rng.gen_range(3..=6);
+            let temp_state = end_state.block_state(block_id.clone());
+            let mut dp_ai = ai::DpAI::new(d, c);
+            let dp_program = dp_ai.solve(image, &temp_state);
+            next_program.0.append(&mut dp_program.0.clone());
+        } else {
+            match mv {
+                // TODO swap color timing
+                Move::PCut {
+                    ref block_id,
+                    point,
+                } => {
+                    let r = rng.gen_range(0..2);
+                    if r == 0 {
+                        // change PCut point
+                        let dx = rng.gen_range(-5..=5);
+                        let dy = rng.gen_range(-5..=5);
+                        let npoint = Point::new(point.x + dx, point.y + dy);
+                        next_program.0[t] = Move::PCut {
+                            block_id: block_id.clone(),
+                            point: npoint,
+                        };
+                    } else if r == 1 {
+                        next_program.0.remove(t);
+                        if let Some(result) = Self::remove_all_child(&next_program, block_id) {
+                            next_program = result;
+                        } else {
+                            return None;
+                        }
                     }
                 }
-            }
-            Move::LCut {
-                ref block_id,
-                orientation,
-                line_number,
-            } => {
-                // TODO
-                let r = rng.gen_range(0..2);
-                if r == 0 {
-                    // change LCut position
-                    let d = rng.gen_range(-5..=5);
-                    next_program.0[t] = Move::LCut {
-                        block_id: block_id.clone(),
-                        orientation,
-                        line_number: line_number + d,
-                    };
-                } else {
-                    next_program.0.remove(t);
-                    if let Some(result) = Self::remove_all_child(&next_program, block_id) {
-                        next_program = result;
+                Move::LCut {
+                    ref block_id,
+                    orientation,
+                    line_number,
+                } => {
+                    // TODO
+                    let r = rng.gen_range(0..2);
+                    if r == 0 {
+                        // change LCut position
+                        let d = rng.gen_range(-5..=5);
+                        next_program.0[t] = Move::LCut {
+                            block_id: block_id.clone(),
+                            orientation,
+                            line_number: line_number + d,
+                        };
                     } else {
-                        return None;
+                        next_program.0.remove(t);
+                        if let Some(result) = Self::remove_all_child(&next_program, block_id) {
+                            next_program = result;
+                        } else {
+                            return None;
+                        }
                     }
                 }
-            }
-            Move::Color {
-                ref block_id,
-                color: _,
-            } => {
-                let mut state = initial_state.clone();
-                simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
-                let block = state.blocks[block_id];
-                let r = rng.gen_range(0..2);
-                let color = if r == 0 {
-                    // random sampling
-                    let x = block.p.x + rng.gen_range(0..block.size.x);
-                    let y = block.p.y + rng.gen_range(0..block.size.y);
-                    image.0[y as usize][x as usize]
-                } else {
-                    // average
-                    image.average(block.p, block.size)
-                };
-                next_program.0[t] = Move::Color {
-                    block_id: block_id.clone(),
-                    color,
-                };
-            }
-            _ => {
-                // Do nothing
-                return None;
+                Move::Color {
+                    ref block_id,
+                    color: _,
+                } => {
+                    let mut state = initial_state.clone();
+                    simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
+                    let block = state.blocks[block_id];
+                    let r = rng.gen_range(0..2);
+                    let color = if r == 0 {
+                        // random sampling
+                        let x = block.p.x + rng.gen_range(0..block.size.x);
+                        let y = block.p.y + rng.gen_range(0..block.size.y);
+                        image.0[y as usize][x as usize]
+                    } else {
+                        // average
+                        image.average(block.p, block.size)
+                    };
+                    next_program.0[t] = Move::Color {
+                        block_id: block_id.clone(),
+                        color,
+                    };
+                }
+                _ => {
+                    // Do nothing
+                    return None;
+                }
             }
         }
         Some((next_program, t))
