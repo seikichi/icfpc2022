@@ -42,7 +42,7 @@ exports.handler = async function (event, _context) {
       } = require("@aws-sdk/client-dynamodb");
 
       const pk = `R#${runId}`;
-      const sk = `S#${runId}`;
+      const sk = `S#${problemId}`;
       const region = "ap-northeast-1";
       const TableName = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
       const client = new DynamoDBClient({ region });
