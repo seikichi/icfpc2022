@@ -1,4 +1,4 @@
-use crate::isl;
+use core::isl;
 
 use aws_sdk_dynamodb as dynamodb;
 use aws_sdk_dynamodb::model::AttributeValue;

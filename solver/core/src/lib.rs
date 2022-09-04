@@ -1,13 +1,12 @@
+pub mod isl;
 mod ai;
-mod db;
 mod image;
 mod initial_config;
-mod isl;
 mod simulator;
 
 use anyhow::bail;
+use isl::Program;
 use log::info;
-use std::env;
 use std::fs;
 use std::path::PathBuf;
 use std::time::Duration;
@@ -82,8 +81,16 @@ fn parse_ai_string(
     Ok((head_ai, chained_ais))
 }
 
-#[tokio::main]
-async fn main() -> anyhow::Result<()> {
+pub struct Output {
+    pub run_id: Option<String>,
+    pub problem_id: String,
+    pub program: Program,
+    pub score: i64,
+    pub output_image_filename: String,
+    pub ai: String,
+}
+
+pub fn run() -> anyhow::Result<Output> {
     let opt = Opt::from_args();
 
     // init logger
@@ -143,19 +150,12 @@ async fn main() -> anyhow::Result<()> {
     info!("output PNG to: {}", output_image_filename.to_string_lossy());
     output_image.save(output_image_filename.clone())?;
 
-    if let Some(run_id) = opt.run_id {
-        let commit = env::var("COMMIT")?;
-        db::save(
-            &run_id,
-            &problem_id,
-            &program,
-            score,
-            &output_image_filename.to_string_lossy(),
-            &opt.ai,
-            &commit,
-        )
-        .await?;
-    }
-
-    Ok(())
+    Ok(Output {
+        run_id: opt.run_id,
+        problem_id: problem_id,
+        program: program,
+        score,
+        output_image_filename: output_image_filename.to_string_lossy().to_string(),
+        ai: opt.ai,
+    })
 }
