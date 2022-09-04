@@ -38,7 +38,8 @@ const Home: NextPage<Props> = ({ runs }) => {
               <TableCell>実行日時</TableCell>
               <TableCell>引数</TableCell>
               <TableCell>実行対象</TableCell>
-              <TableCell>解答数</TableCell>
+              <TableCell>成功</TableCell>
+              <TableCell>失敗</TableCell>
               <TableCell>スコア</TableCell>
             </TableRow>
           </TableHead>
@@ -55,6 +56,7 @@ const Home: NextPage<Props> = ({ runs }) => {
                   <TableCell>{r.args}</TableCell>
                   <TableCell>{r.target}</TableCell>
                   <TableCell>{r.problems}</TableCell>
+                  <TableCell>{r.failures}</TableCell>
                   <TableCell>{r.score}</TableCell>
                 </TableRow>
               );

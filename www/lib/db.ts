@@ -12,6 +12,7 @@ export interface Run {
   args: string;
   target: string;
   problems: number;
+  failures: number;
   score: number;
 }
 
@@ -28,6 +29,11 @@ export interface RunResult {
     score: number;
     time: number | null;
     date: number | null;
+  }[];
+
+  failures: {
+    problemId: number;
+    error: string;
   }[];
 }
 
@@ -174,10 +180,18 @@ export async function fetchRun(id: string): Promise<RunResult> {
     score: 0,
     target: "",
     results: [],
+    failures: [],
   };
 
   for (const item of items) {
     const sk = item["SK"]["S"]!;
+
+    if (sk.startsWith("S") && item["Error"]?.S) {
+      const problemId = parseInt(sk.split("#")[1], 10);
+      const error = item["Error"]?.S!;
+      result.failures.push({ problemId, error });
+      continue;
+    }
 
     if (sk.startsWith("R")) {
       result.time = parseInt(item["GSI1SK"]["N"]!);
@@ -199,6 +213,7 @@ export async function fetchRun(id: string): Promise<RunResult> {
   }
 
   result.results.sort((a, b) => a.problemId - b.problemId);
+  result.failures.sort((a, b) => a.problemId - b.problemId);
   return result;
 }
 
@@ -223,10 +238,14 @@ export async function fetchRunList(): Promise<Run[]> {
   for (const item of items) {
     let problems = 0;
     let score = 0;
+    let failures = 0;
     for (const [key, value] of Object.entries(item)) {
       if (key.startsWith("S#")) {
         problems++;
         score += parseInt(value["N"] as any, 10);
+      }
+      if (key.startsWith("E#")) {
+        failures++;
       }
     }
 
@@ -237,6 +256,7 @@ export async function fetchRunList(): Promise<Run[]> {
       target: item["Target"]["S"]!,
       problems,
       score,
+      failures,
     });
   }
 

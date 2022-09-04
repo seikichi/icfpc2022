@@ -35,6 +35,7 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
 };
 
 const Page: NextPage<Props> = ({ result }) => {
+  console.log(result.failures);
   return (
     <>
       <Breadcrumbs aria-label="breadcrumb">
@@ -53,7 +54,8 @@ const Page: NextPage<Props> = ({ result }) => {
 
         <ul>
           <li>スコア: {result.score}</li>
-          <li>回答数: {result.results.length}</li>
+          <li>成功: {result.results.length} 件</li>
+          <li>失敗: {result.failures.length} 件 (タイムアウト除く)</li>
           <li>
             引数: <code>{result.args}</code>
           </li>
