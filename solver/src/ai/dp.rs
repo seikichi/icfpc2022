@@ -8,6 +8,8 @@ use crate::simulator::SimpleBlock;
 use crate::simulator::State;
 use rand::rngs::ThreadRng;
 
+use super::MergeAI;
+
 pub struct DpAI {
     rng: ThreadRng,
     sample_color_num: usize,
@@ -18,7 +20,14 @@ pub struct DpAI {
 }
 
 impl HeadAI for DpAI {
-    fn solve(&mut self, image: &image::Image, _initial_state: &simulator::State) -> Program {
+    fn solve(&mut self, image: &image::Image, initial_state: &simulator::State) -> Program {
+        let mut ret = Program(vec![]);
+        let mut initial_block_id = 0;
+        if initial_state.blocks.len() != 1 {
+            let mut merge_ai = MergeAI::new();
+            ret = merge_ai.solve(image, initial_state);
+            initial_block_id = merge_ai.merged_block_id();
+        }
         // color sampling
         self.image = image.clone();
         self.sampled_color =
@@ -28,9 +37,11 @@ impl HeadAI for DpAI {
         // dp
         let d = self.memo.len();
         let (_score, program) = self.calc(0, 0, d, d, 0);
-        let result = self.renumber_block_id(&mut vec![program]);
+        let mut result = self.renumber_block_id(&mut vec![program]);
+        result.convert_initial_block_id(initial_block_id);
         // println!("{}", result);
-        return result;
+        ret.0.append(&mut result.0);
+        return ret;
     }
 }
 impl DpAI {

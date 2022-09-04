@@ -12,7 +12,12 @@ pub struct RefineAi {
 }
 
 impl ai::ChainedAI for RefineAi {
-    fn solve(&mut self, image: &image::Image, initial_state: &State, initial_program: &Program) -> Program {
+    fn solve(
+        &mut self,
+        image: &image::Image,
+        initial_state: &State,
+        initial_program: &Program,
+    ) -> Program {
         // TODO seed_from_u64
         let mut rng = rand::thread_rng();
         let mut best_program = initial_program.clone();
@@ -78,10 +83,7 @@ impl ai::ChainedAI for RefineAi {
                     ref block_id,
                     color: _,
                 } => {
-                    let mut state = simulator::State::initial_state(
-                        image.width() as i32,
-                        image.height() as i32,
-                    );
+                    let mut state = initial_state.clone();
                     simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
                     let block = state.blocks[block_id];
                     let r = rng.gen_range(0..2);

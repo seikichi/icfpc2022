@@ -9,20 +9,23 @@ pub struct MergeAI {
 }
 
 impl HeadAI for MergeAI {
-    fn solve(&mut self, _image: &image::Image, _initial_state: &simulator::State) -> Program {
+    fn solve(&mut self, _image: &image::Image, initial_state: &simulator::State) -> Program {
+        self.state = initial_state.clone();
         let mut ret = Program(vec![]);
         while self.active_block_num() > 1 {
+            // 左上から順にマージする
+            let blocks = self.state.blocks.clone();
+            let mut blocks = blocks
+                .iter()
+                .filter(|(_key, value)| value.active)
+                .map(|(key, value)| (key, value))
+                .collect::<Vec<_>>();
+            blocks.sort_by(|a, b| a.1.p.x.cmp(&b.1.p.x).then(a.1.p.y.cmp(&b.1.p.y)));
             let mut target = None;
-            for (id1, block1) in self.state.blocks.iter() {
-                if !block1.active {
-                    continue;
-                }
-                for (id2, block2) in self.state.blocks.iter() {
-                    if !block2.active || id1 == id2 {
-                        continue;
-                    }
-                    if let Some(_next_block) = simulator::merge_block(block1, block2) {
-                        target = Some((id1.clone(), id2.clone()));
+            for i in 0..blocks.len() {
+                for j in i + 1..blocks.len() {
+                    if let Some(_next_block) = simulator::merge_block(&blocks[i].1, &blocks[j].1) {
+                        target = Some((blocks[i].0.clone(), blocks[j].0.clone()));
                         break;
                     }
                 }
@@ -47,9 +50,9 @@ impl HeadAI for MergeAI {
 
 impl MergeAI {
     #[allow(dead_code)]
-    pub fn new(initial_state: &State) -> Self {
+    pub fn new() -> Self {
         MergeAI {
-            state: initial_state.clone(),
+            state: State::initial_state(0, 0),
         }
     }
     fn active_block_num(&self) -> u32 {
