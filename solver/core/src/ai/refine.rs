@@ -242,7 +242,7 @@ impl RefineAi {
         let end_state = simulator::simulate_all(&program, &mut state).unwrap();
         let d = rng.gen_range(2..=6);
         let c = rng.gen_range(3..=8);
-        let temp_state = end_state.block_state(block_id.clone());
+        let temp_state = end_state.block_state(block_id.clone(), initial_state.cost_coeff_version);
         let mut dp_ai = ai::DpAI::new(d, c);
         let dp_program = dp_ai.solve(image, &temp_state);
         program.0.append(&mut dp_program.0.clone());

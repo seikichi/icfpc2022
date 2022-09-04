@@ -48,7 +48,7 @@ impl HeadAI for DpAI {
         let mut initial_block_id = initial_state.blocks.keys().next().unwrap().clone();
         self.initial_state = initial_state.clone();
         if initial_state.blocks.len() != 1 {
-            let mut merge_ai = MergeAI::new();
+            let mut merge_ai = MergeAI::new(initial_state.cost_coeff_version);
             ret = merge_ai.solve(image, initial_state);
             initial_block_id = merge_ai.merged_block_id();
             self.initial_state = simulator::simulate_all(&ret, &self.initial_state).unwrap();
@@ -107,7 +107,7 @@ impl DpAI {
             memo,
             similality_memo,
             image: image::Image::new(1, 1),
-            initial_state: State::initial_state(0, 0),
+            initial_state: State::initial_state(0, 0, 0),
             initial_block: SimpleBlock {
                 p: Point::new(0, 0),
                 size: Point::new(0, 0),
@@ -146,6 +146,7 @@ impl DpAI {
                     target_area,
                     self.image.width(),
                     self.image.height(),
+                    self.initial_state.cost_coeff_version,
                 );
                 let scost = self.calc_similality(x, y, w, h, c);
                 if ncost + scost < ret.0 {
@@ -169,6 +170,7 @@ impl DpAI {
                         target_area,
                         self.image.width(),
                         self.image.height(),
+                        self.initial_state.cost_coeff_version,
                     );
                     let mut nlchilds = vec![];
                     for i in 0..4 {
@@ -202,6 +204,7 @@ impl DpAI {
                     target_area,
                     self.image.width(),
                     self.image.height(),
+                    self.initial_state.cost_coeff_version,
                 );
                 let mut nlchilds = vec![];
                 for i in 0..2 {
@@ -233,6 +236,7 @@ impl DpAI {
                     target_area,
                     self.image.width(),
                     self.image.height(),
+                    self.initial_state.cost_coeff_version,
                 );
                 let mut nlchilds = vec![];
                 for i in 0..2 {
@@ -390,6 +394,7 @@ fn dp_ai_test() {
     let state = State {
         blocks,
         next_global_id: 10,
+        cost_coeff_version: 0,
     };
     let image = image::Image::from_string_array(&[
         "rr.....", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..",

@@ -49,6 +49,7 @@ impl HeadAI for SwapAI {
                             b_i.area() as usize,
                             image.width(),
                             image.height(),
+                            initial_state.cost_coeff_version,
                         );
                         let sim_before =
                             similarity[i][color_origin[i]] + similarity[j][color_origin[j]];

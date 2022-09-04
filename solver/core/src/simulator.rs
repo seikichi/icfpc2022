@@ -87,9 +87,10 @@ impl SimpleBlock {
 pub struct State {
     pub blocks: HashMap<BlockId, SimpleBlock>,
     pub next_global_id: u32,
+    pub cost_coeff_version: u8, // 0 or 1
 }
 impl State {
-    pub fn initial_state(w: i32, h: i32) -> Self {
+    pub fn initial_state(w: i32, h: i32, cost_coeff_version: u8) -> Self {
         let mut blocks = HashMap::new();
         blocks.insert(
             BlockId::new(&vec![0]),
@@ -98,16 +99,18 @@ impl State {
         State {
             blocks,
             next_global_id: 1,
+            cost_coeff_version,
         }
     }
     // 指定したブロックが1つだけ入ったStateを返す
-    pub fn block_state(&self, block_id: BlockId) -> Self {
+    pub fn block_state(&self, block_id: BlockId, cost_coeff_version: u8) -> Self {
         let mut blocks = HashMap::new();
         let block = self.blocks[&block_id].clone();
         blocks.insert(block_id, block);
         State {
             blocks,
             next_global_id: self.next_global_id,
+            cost_coeff_version,
         }
     }
     #[allow(dead_code)]
@@ -288,30 +291,45 @@ pub fn simulate_partial(state: &mut State, program: &[Move]) -> Result<(), Progr
     Ok(())
 }
 
+static COST_COEFF_TABLE: [[f32; 5]; 2] = [
+    // PCut LCut Color Swap Merge
+    [10.0, 7.0, 5.0, 3.0, 1.0],
+    [3.0, 2.0, 5.0, 3.0, 1.0],
+];
+
 pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<i64> {
-    let (base, area) = match mv {
-        Move::PCut { ref block_id, .. } => (10.0, state.blocks.get(block_id)?.area()),
-        Move::LCut { ref block_id, .. } => (7.0, state.blocks.get(block_id)?.area()),
-        Move::Color { ref block_id, .. } => (5.0, state.blocks.get(block_id)?.area()),
-        Move::Swap { ref a, .. } => (3.0, state.blocks.get(a)?.area()),
+    let (i, area) = match mv {
+        Move::PCut { ref block_id, .. } => (0, state.blocks.get(block_id)?.area()),
+        Move::LCut { ref block_id, .. } => (1, state.blocks.get(block_id)?.area()),
+        Move::Color { ref block_id, .. } => (2, state.blocks.get(block_id)?.area()),
+        Move::Swap { ref a, .. } => (3, state.blocks.get(a)?.area()),
         Move::Merge { ref a, ref b } => (
-            1.0,
+            4,
             state.blocks.get(a)?.area().max(state.blocks.get(b)?.area()),
         ),
     };
+    let base = COST_COEFF_TABLE[state.cost_coeff_version as usize][i];
     Some((base * (w * h) as f32 / area as f32).round() as i64)
 }
-pub fn move_cost_without_state(mv: &Move, target_area: usize, w: usize, h: usize) -> i64 {
+
+pub fn move_cost_without_state(
+    mv: &Move,
+    target_area: usize,
+    w: usize,
+    h: usize,
+    cost_coeff_version: u8,
+) -> i64 {
     assert!(target_area > 0);
     assert!(w > 0);
     assert!(h > 0);
-    let base = match mv {
-        Move::PCut { .. } => 10.0,
-        Move::LCut { .. } => 7.0,
-        Move::Color { .. } => 5.0,
-        Move::Swap { .. } => 3.0,
-        Move::Merge { .. } => 1.0,
+    let i = match mv {
+        Move::PCut { .. } => 0,
+        Move::LCut { .. } => 1,
+        Move::Color { .. } => 2,
+        Move::Swap { .. } => 3,
+        Move::Merge { .. } => 4,
     };
+    let base = COST_COEFF_TABLE[cost_coeff_version as usize][i];
     (base * (w * h) as f32 / target_area as f32).round() as i64
 }
 
@@ -417,7 +435,7 @@ mod tests {
 
     #[test]
     fn test_simulate_pcut() {
-        let mut state = State::initial_state(5, 3);
+        let mut state = State::initial_state(5, 3, 0);
         simulate(
             &mut state,
             &Move::PCut {
@@ -466,7 +484,7 @@ mod tests {
 
     #[test]
     fn test_simulate_pcut_twice() {
-        let mut state = State::initial_state(8, 8);
+        let mut state = State::initial_state(8, 8, 0);
         simulate(
             &mut state,
             &Move::PCut {
@@ -512,7 +530,7 @@ mod tests {
 
     #[test]
     fn test_simulate_lcut_twice() {
-        let mut state = State::initial_state(8, 8);
+        let mut state = State::initial_state(8, 8, 0);
         simulate(
             &mut state,
             &Move::LCut {
@@ -560,7 +578,7 @@ mod tests {
 
     #[test]
     fn test_simulate_swap() {
-        let mut state = State::initial_state(4, 3);
+        let mut state = State::initial_state(4, 3, 0);
         simulate(
             &mut state,
             &Move::LCut {
@@ -602,7 +620,7 @@ mod tests {
 
     #[test]
     fn test_simulate_merge_vertically() {
-        let mut state = State::initial_state(5, 3);
+        let mut state = State::initial_state(5, 3, 0);
         simulate(
             &mut state,
             &Move::PCut {
@@ -643,7 +661,7 @@ mod tests {
 
     #[test]
     fn test_simulate_merge_horizontally() {
-        let mut state = State::initial_state(5, 3);
+        let mut state = State::initial_state(5, 3, 0);
         simulate(
             &mut state,
             &Move::PCut {
@@ -684,7 +702,7 @@ mod tests {
 
     #[test]
     fn test_simulate_merge_complex() {
-        let mut state = State::initial_state(5, 3);
+        let mut state = State::initial_state(5, 3, 0);
         simulate(
             &mut state,
             &Move::PCut {
@@ -772,7 +790,7 @@ mod tests {
     #[test]
     fn test_calc_state_similarity() {
         let red = Color::new(1.0, 0.0, 0.0, 1.0);
-        let mut state = State::initial_state(5, 3);
+        let mut state = State::initial_state(5, 3, 0);
         simulate(
             &mut state,
             &Move::LCut {
@@ -815,7 +833,7 @@ mod tests {
     #[test]
     fn test_move_cost() {
         //pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<f32>
-        let mut state = State::initial_state(5, 3);
+        let mut state = State::initial_state(5, 3, 0);
         simulate(
             &mut state,
             &Move::LCut {

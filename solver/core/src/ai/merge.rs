@@ -49,10 +49,9 @@ impl HeadAI for MergeAI {
 }
 
 impl MergeAI {
-    #[allow(dead_code)]
-    pub fn new() -> Self {
+    pub fn new(cost_coeff_version: u8) -> Self {
         MergeAI {
-            state: State::initial_state(0, 0),
+            state: State::initial_state(0, 0, cost_coeff_version),
         }
     }
     fn active_block_num(&self) -> u32 {
