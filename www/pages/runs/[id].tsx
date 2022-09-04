@@ -119,7 +119,7 @@ const Page: NextPage<Props> = ({ result }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>問題</TableCell>
+                  <TableCell>#</TableCell>
                   <TableCell>スコア</TableCell>
                   <TableCell>入力</TableCell>
                   <TableCell>出力</TableCell>
@@ -193,7 +193,7 @@ const Page: NextPage<Props> = ({ result }) => {
             <Table>
               <TableHead>
                 <TableRow>
-                  <TableCell>問題</TableCell>
+                  <TableCell>#</TableCell>
                   <TableCell>入力</TableCell>
                   <TableCell>エラー</TableCell>
                 </TableRow>
