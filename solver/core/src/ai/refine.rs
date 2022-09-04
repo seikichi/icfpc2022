@@ -12,8 +12,14 @@ use crate::simulator::State;
 use log::info;
 use rand::Rng;
 
+pub enum OptimizeAlgorithm {
+    HillClimbing,
+    Annealing,
+}
+
 pub struct RefineAi {
     pub n_iters: usize,
+    pub algorithm: OptimizeAlgorithm,
 }
 
 impl ai::ChainedAI for RefineAi {
@@ -33,8 +39,8 @@ impl ai::ChainedAI for RefineAi {
         let mut best_program = initial_program.clone();
         let mut best_score = current_score;
 
-        let initial_temperature = 100.0;
         let mut temperature;
+        let initial_temperature = 1.0;
 
         for iter in 0..self.n_iters {
             // tweak temperature
@@ -55,14 +61,17 @@ impl ai::ChainedAI for RefineAi {
             };
 
             // 新しい解を受理するか決める
-            let accept = {
-                if new_score < current_score {
-                    true
-                } else {
-                    // new_score >= current_score
-                    let delta = (new_score - current_score) as f64;
-                    let accept_prob = (-delta / temperature).exp();
-                    rng.gen::<f64>() < accept_prob
+            let accept = match self.algorithm {
+                OptimizeAlgorithm::HillClimbing => new_score < current_score,
+                OptimizeAlgorithm::Annealing => {
+                    if new_score < current_score {
+                        true
+                    } else {
+                        // new_score >= current_score
+                        let delta = (new_score - current_score) as f64;
+                        let accept_prob = (-delta / temperature).exp();
+                        rng.gen::<f64>() < accept_prob
+                    }
                 }
             };
 

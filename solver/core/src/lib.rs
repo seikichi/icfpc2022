@@ -38,6 +38,9 @@ struct Opt {
     #[structopt(long = "refine-iters", default_value = "50000")]
     refine_iters: usize,
 
+    #[structopt(long = "refine-algorithm", default_value = "annealing")]
+    refine_algorithm: String,
+
     #[structopt(long = "annealing-seconds", default_value = "10")]
     annealing_seconds: u64,
 
@@ -71,6 +74,11 @@ fn parse_ai_string(
         let chained_ai: Box<dyn ai::ChainedAI> = match *name {
             "Refine" => Box::new(ai::RefineAi {
                 n_iters: opt.refine_iters,
+                algorithm: match opt.refine_algorithm.as_str() {
+                    "hill" | "hillclimbing" => ai::OptimizeAlgorithm::HillClimbing,
+                    "annealing" => ai::OptimizeAlgorithm::Annealing,
+                    x => bail!("'{x}' is not OptimizeAlgorithm"),
+                },
             }),
             "Annealing" => Box::new(ai::AnnealingAI {
                 time_limit: Duration::from_secs(opt.annealing_seconds),
