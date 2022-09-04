@@ -18,7 +18,7 @@ impl Display for BlockId {
 }
 impl BlockId {
     pub fn default() -> Self {
-        BlockId(VecDeque::default())
+        BlockId(VecDeque::with_capacity(0))
     }
     pub fn new(id: &[u32]) -> Self {
         BlockId(VecDeque::from_iter(id.iter().copied()))
