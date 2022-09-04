@@ -114,8 +114,8 @@ async fn main() -> anyhow::Result<()> {
     score_history.push(simulator::calc_score(&program, &img, &initial_state)?);
 
     for mut chained_ai in chained_ais {
-        score_history.push(simulator::calc_score(&program, &img, &initial_state)?);
         program = chained_ai.solve(&img, &initial_state, &program);
+        score_history.push(simulator::calc_score(&program, &img, &initial_state)?);
     }
 
     println!("Score History:");

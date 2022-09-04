@@ -22,7 +22,7 @@ pub struct DpAI {
 impl HeadAI for DpAI {
     fn solve(&mut self, image: &image::Image, initial_state: &simulator::State) -> Program {
         let mut ret = Program(vec![]);
-        let mut initial_block_id = 0;
+        let mut initial_block_id = initial_state.blocks.keys().next().unwrap().0[0];
         if initial_state.blocks.len() != 1 {
             let mut merge_ai = MergeAI::new();
             ret = merge_ai.solve(image, initial_state);
