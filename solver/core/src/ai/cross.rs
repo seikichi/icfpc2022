@@ -47,7 +47,7 @@ impl CrossAI {
         ];
         for (i, ps) in next_points.iter().enumerate() {
             let mut next_block_id = block_id.clone();
-            next_block_id.0.push_back(i as u32);
+            next_block_id.0.push(i as u32);
             result.extend(self.draw(
                 next_block_id,
                 image,

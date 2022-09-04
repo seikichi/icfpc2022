@@ -13,6 +13,8 @@ pub async fn save(
     image_path: &str,
     ai: &str,
     commit: &str,
+    elapsed: u64,
+    now: u64,
 ) -> anyhow::Result<()> {
     let table_name = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
     let bucket_name = "infrastack-bucket83908e77-vvxulc74xyib";
@@ -34,6 +36,8 @@ pub async fn save(
         .item("GSI1SK", AttributeValue::N(gsi1sk))
         .item("AI", AttributeValue::S(ai.to_string()))
         .item("Commit", AttributeValue::S(commit.to_string()))
+        .item("ExecTime", AttributeValue::N(elapsed.to_string()))
+        .item("ExecDate", AttributeValue::N(now.to_string()))
         .send()
         .await?;
 
