@@ -4,3 +4,7 @@ members = [
     "cli",
     "lambda",
 ]
+
+# for flamegraph
+#[profile.release]
+#debug = true

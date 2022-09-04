@@ -1,6 +1,6 @@
 target
 tmp
 result.png
-flamegraph.svg
+flamegraph*.svg
 perf.data
 perf.data.old
