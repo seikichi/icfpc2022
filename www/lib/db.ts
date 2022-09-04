@@ -34,10 +34,11 @@ const region = "ap-northeast-1";
 const TableName = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
 const client = new DynamoDBClient({
   region,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
+  // 指定しなくても動きそう？
+  // credentials: {
+  //   accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+  //   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  // },
 });
 
 export async function fetchSolutionList(id: string): Promise<Solution[]> {
