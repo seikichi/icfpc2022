@@ -70,6 +70,7 @@ fn parse_ai_string(
         // "Merge" => Box::new(ai::MergeAI::new()),
         "ChangeColor" => Box::new(ai::ChangeColorAI {}),
         "Swap" => Box::new(ai::SwapAI {}),
+        "Rect" => Box::new(ai::RectAI {}),
         x => bail!("'{x}' is not a HeadAI"),
     };
     let mut chained_ais = vec![];
