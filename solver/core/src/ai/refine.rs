@@ -114,13 +114,16 @@ impl RefineAi {
                     // change PCut point
                     let dx = rng.gen_range(-5..=5);
                     let dy = rng.gen_range(-5..=5);
+                    if dx == 0 || dy == 0 {
+                        return None;
+                    }
                     let npoint = Point::new(point.x + dx, point.y + dy);
                     next_program.0[t] = Move::PCut {
                         block_id: block_id.clone(),
                         point: npoint,
                     };
                     description = format!("move PCut dx:{} dy:{} {}", dx, dy, next_program.0[t]);
-                } else if r == 1 {
+                } else {
                     next_program.0.remove(t);
                     if let Some(result) = Self::remove_all_child(&next_program, block_id) {
                         next_program = result;
@@ -147,6 +150,9 @@ impl RefineAi {
                 if r > 0 {
                     // change LCut position
                     let d = rng.gen_range(-5..=5);
+                    if d == 0 {
+                        return None;
+                    }
                     next_program.0[t] = Move::LCut {
                         block_id: block_id.clone(),
                         orientation,
@@ -187,7 +193,9 @@ impl RefineAi {
                     // average
                     image.average(block.p, block.size)
                 };
-                if prev_color == color {
+                let d = prev_color - color;
+                let similarity = (d * 255.0).round().length() as f64;
+                if similarity < 1.5 {
                     return None;
                 }
                 next_program.0[t] = Move::Color {
