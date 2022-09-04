@@ -2,6 +2,7 @@ use crate::ai::HeadAI;
 use crate::image;
 use crate::isl::*;
 use crate::simulator;
+use crate::simulator::SimpleBlock;
 use crate::simulator::State;
 use rand::rngs::ThreadRng;
 
@@ -35,10 +36,13 @@ pub struct DpAI {
     similality_memo: Vec<Vec<Vec<Option<i64>>>>,
     image: image::Image,
     initial_state: State,
+    initial_block: SimpleBlock,
 }
 
 impl HeadAI for DpAI {
     fn solve(&mut self, image: &image::Image, initial_state: &simulator::State) -> Program {
+        let d = self.memo.len();
+        self.image = image.clone();
         let mut ret = Program(vec![]);
         let mut initial_block_id = initial_state.blocks.keys().next().unwrap().clone();
         self.initial_state = initial_state.clone();
@@ -48,15 +52,24 @@ impl HeadAI for DpAI {
             initial_block_id = merge_ai.merged_block_id();
             simulator::simulate_all(&ret, &self.initial_state).unwrap();
         }
+        self.initial_block = self
+            .initial_state
+            .blocks
+            .get(&initial_block_id)
+            .unwrap()
+            .clone();
+
+        if self.width() < d || self.height() < d {
+            return ret;
+        }
+
         // color sampling
-        self.image = image.clone();
         self.sampled_color =
             image::k_means_color_sampling(image, self.sample_color_num - 1, 20, &mut self.rng);
-        self.sampled_color.push(Color::ONE); // TODO blockの色にする
+        self.sampled_color.push(self.initial_block.color);
         self.sampled_color.reverse();
 
         // dp
-        let d = self.memo.len();
         let _score = self.calc(0, 0, d, d, 0);
         let mut program = Program(vec![]);
         self.restore_program(&mut program, 0, 0, d, d, 0, &mut initial_block_id);
@@ -86,6 +99,12 @@ impl DpAI {
             similality_memo,
             image: image::Image::new(1, 1),
             initial_state: State::initial_state(0, 0),
+            initial_block: SimpleBlock {
+                p: Point::new(0, 0),
+                size: Point::new(0, 0),
+                color: Color::ONE,
+                active: true,
+            },
         }
     }
     fn calc(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i64 {
@@ -103,6 +122,7 @@ impl DpAI {
         let lt = self.convert_point(x, y);
         let rb = self.convert_point(x + w, y + h);
         let target_area = ((rb.x - lt.x) * (rb.y - lt.y)) as usize;
+        assert!(target_area > 0);
         for c in 0..self.sampled_color.len() {
             let mut nprogram = Program(vec![]);
             let mut ncost = 0;
@@ -273,9 +293,11 @@ impl DpAI {
                 if let Some(s) = self.similality_memo[nx][ny][color_id] {
                     ret += s;
                 } else {
+                    let lt = self.convert_point(nx, ny);
+                    let rb = self.convert_point(nx + 1, ny + 1);
                     let s = simulator::calc_partial_one_color_similarity(
-                        self.convert_point(nx, ny),
-                        self.convert_point(1, 1),
+                        lt,
+                        Point::new(rb.x - lt.x, rb.y - lt.y),
                         self.sampled_color[color_id],
                         &self.image,
                     );
@@ -309,12 +331,12 @@ impl DpAI {
     fn convert_point(&self, x: usize, y: usize) -> Point {
         let d = self.memo.len();
         let l = std::cmp::min(
-            self.width() as i32,
-            self.topleft().x + (x * (self.width() / d)) as i32,
+            self.topleft().x + self.width() as i32,
+            self.topleft().x + (x * self.width() / d) as i32,
         );
         let t = std::cmp::min(
-            self.height() as i32,
-            self.topleft().y + (y * (self.height() / d)) as i32,
+            self.topleft().y + self.height() as i32,
+            self.topleft().y + (y * self.height() / d) as i32,
         );
         return Point::new(l, t);
     }
@@ -340,12 +362,41 @@ impl DpAI {
     //     return ret;
     // }
     fn topleft(&self) -> Point {
-        Point::new(0, 0)
+        self.initial_block.p
     }
     fn width(&self) -> usize {
-        self.image.width()
+        self.initial_block.size.x as usize
     }
     fn height(&self) -> usize {
-        self.image.height()
+        self.initial_block.size.y as usize
     }
+}
+
+#[test]
+fn dp_ai_test() {
+    let mut blocks = std::collections::HashMap::new();
+    let block_id = BlockId(vec![0, 0, 0, 2]);
+    let simpel_block = SimpleBlock::new(Point::new(1, 1), Point::new(3, 2), Color::ONE);
+    blocks.insert(block_id, simpel_block);
+    let state = State {
+        blocks,
+        next_global_id: 10,
+    };
+    let image = image::Image::from_string_array(&[
+        "rr.....", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..",
+        "bbggg..",
+    ]);
+    let mut dp_ai = DpAI::new(2, 3);
+
+    let dp_program = dp_ai.solve(&image, &state);
+    assert!(dp_ai.convert_point(0, 0) == Point::new(1, 1));
+    assert!(dp_ai.convert_point(2, 2) == Point::new(4, 3));
+
+    match simulator::calc_score(&dp_program, &image, &state) {
+        Ok(_score) => {}
+        Err(error) => {
+            log::debug!("{}", error);
+            assert!(false);
+        }
+    };
 }

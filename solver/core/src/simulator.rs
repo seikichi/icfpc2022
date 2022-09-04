@@ -88,6 +88,25 @@ impl State {
             next_global_id: 1,
         }
     }
+    // 指定したブロックが1つだけ入ったStateを返す
+    pub fn block_state(&self, block_id: BlockId) -> Self {
+        let mut blocks = HashMap::new();
+        let block = self.blocks[&block_id].clone();
+        blocks.insert(block_id, block);
+        State {
+            blocks,
+            next_global_id: self.next_global_id,
+        }
+    }
+    pub fn sample_active_block(&self, rng: &mut impl rand::Rng) -> BlockId {
+        let blocks = self
+            .blocks
+            .iter()
+            .filter(|(_id, block)| block.active)
+            .collect::<Vec<_>>();
+        let t = rng.gen_range(0..blocks.len());
+        return blocks[t].0.clone();
+    }
 }
 
 pub fn merge_block(block1: &SimpleBlock, block2: &SimpleBlock) -> Option<SimpleBlock> {
@@ -270,6 +289,9 @@ pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<i64> {
     Some((base * (w * h) as f32 / area as f32).round() as i64)
 }
 pub fn move_cost_without_state(mv: &Move, target_area: usize, w: usize, h: usize) -> i64 {
+    assert!(target_area > 0);
+    assert!(w > 0);
+    assert!(h > 0);
     let base = match mv {
         Move::PCut { .. } => 10.0,
         Move::LCut { .. } => 7.0,
