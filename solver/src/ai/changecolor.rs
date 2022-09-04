@@ -3,9 +3,7 @@ use crate::image;
 use crate::isl;
 use crate::simulator;
 
-pub struct ChangeColorAI {
-    pub thresh: f32,
-}
+pub struct ChangeColorAI {}
 
 impl HeadAI for ChangeColorAI {
     fn solve(&mut self, image: &image::Image, initial_state: &simulator::State) -> isl::Program {
