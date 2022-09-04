@@ -8,7 +8,9 @@ RUN rustup install stable
 
 WORKDIR /code
 COPY Cargo.lock Cargo.toml /code/
-COPY src /code/src
+COPY core /code/core
+COPY cli /code/cli
+COPY lambda /code/lambda
 RUN cargo build --release
 
 COPY problems /code/problems
