@@ -14,6 +14,7 @@ pub struct DpAI {
     rng: ThreadRng,
     sample_color_num: usize,
     sampled_color: Vec<Color>,
+    // memo[x][y][w][h][color_id]
     memo: Vec<Vec<Vec<Vec<Vec<Option<(i64, Program)>>>>>>,
     similality_memo: Vec<Vec<Vec<Option<i64>>>>,
     image: image::Image,
