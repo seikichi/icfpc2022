@@ -123,7 +123,6 @@ impl DpAI {
                 // let nstate = self.make_state(x, y, w, h, c);
                 let scost = self.calc_similality(x, y, w, h, c);
                 if ncost + scost < ret.0 {
-                    // assert!(ncost + scost > 100);
                     assert!(nprogram.0.len() == 1);
                     ret.0 = ncost + scost;
                     ret.1 = nprogram.clone();
@@ -158,7 +157,6 @@ impl DpAI {
                     }
                     if ncost + nlcost < ret.0 {
                         ret.0 = ncost + nlcost;
-                        // assert!(ncost + nlcost > 100);
                         ret.1 = nprogram.clone();
                         ret.2 = nlchilds;
                     }
@@ -193,7 +191,6 @@ impl DpAI {
                 }
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
-                    // assert!(ncost + nlcost > 100);
                     ret.1 = nprogram.clone();
                     ret.2 = nlchilds;
                 }
@@ -226,7 +223,6 @@ impl DpAI {
                 }
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
-                    // assert!(ncost + nlcost > 100);
                     ret.1 = nprogram.clone();
                     ret.2 = nlchilds;
                 }
