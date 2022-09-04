@@ -29,10 +29,10 @@ export default async function handler(
   const prevs = await fetchRunList();
   const last = Math.max(0, ...prevs.map((p) => p.time));
   const current = new Date().getTime() / 1000;
-  if (last > current - 60 * 5) {
+  if (last > current - 10) {
     return res
       .status(400)
-      .json({ success: false, message: "実行は5分に1回許可されています" });
+      .json({ success: false, message: "実行は10秒に1回許可されています" });
   }
 
   // DB 追加したり Lambda 実行したりする

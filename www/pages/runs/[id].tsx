@@ -66,6 +66,7 @@ const Page: NextPage<Props> = ({ result }) => {
               const input = `https://cdn.robovinci.xyz/imageframes/${r.problemId}.png`;
               const output = `https://d30a5x02adw8tj.cloudfront.net/${result.id}/${r.problemId}.png`;
               const isl = `https://d30a5x02adw8tj.cloudfront.net/${result.id}/${r.problemId}.isl`;
+              const initial = `https://cdn.robovinci.xyz/imageframes/${r.problemId}.initial.png`;
               return (
                 <TableRow key={r.problemId}>
                   <TableCell>
@@ -75,6 +76,17 @@ const Page: NextPage<Props> = ({ result }) => {
                   </TableCell>
                   <TableCell>{r.score}</TableCell>
                   <TableCell>
+                    {r.problemId > 25 && (
+                      <img
+                        style={{
+                          border: "1px solid black",
+                          marginRight: "5px",
+                        }}
+                        src={initial}
+                        width="80"
+                        alt="output"
+                      />
+                    )}
                     <img
                       style={{ border: "1px solid black" }}
                       src={input}

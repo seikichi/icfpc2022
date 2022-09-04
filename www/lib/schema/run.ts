@@ -12,7 +12,16 @@ import { useCallback } from "react";
 import { useRouter } from "next/router";
 
 export const schema = z.object({
-  args: z.string().min(1, "パラメーターを入力して下さい"),
+  args: z
+    .string()
+    .min(
+      1,
+      'パラメーターを入力して下さい (シェルを経由しないため " や * は期待通りに動作しないことがあります)'
+    )
+    .regex(
+      /^[^"';*]+$/,
+      "期待通りに動作しないと予想される文字列が含まれています"
+    ),
   target: z
     .string()
     .regex(
