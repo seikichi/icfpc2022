@@ -58,6 +58,7 @@ const Page: NextPage<Props> = ({ result }) => {
               <TableCell>出力</TableCell>
               <TableCell>ISL</TableCell>
               <TableCell>コミット</TableCell>
+              <TableCell>時間(秒)</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -112,6 +113,7 @@ const Page: NextPage<Props> = ({ result }) => {
                       <MuiLink target="_blank">{r.commit}</MuiLink>
                     </Link>
                   </TableCell>
+                  <TableCell>{r.time ?? "-"}</TableCell>
                 </TableRow>
               );
             })}
