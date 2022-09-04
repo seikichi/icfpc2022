@@ -12,14 +12,29 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import Link from "next/link";
 
-const theme = createTheme({});
+const theme = createTheme({
+  palette: {
+    primary: {
+      main: "#d71345",
+    },
+  },
+});
 
 function Header() {
   return (
     <AppBar position="static">
       <Toolbar>
-        <Typography component="div" variant="h6" sx={{ mx: 2 }}>
-          めん処譽紫
+        <Typography
+          component="div"
+          variant="h6"
+          sx={{ mx: 2, fontWeight: "bold" }}
+        >
+          めん処{" "}
+          <ruby>
+            譽紫<rp>(</rp>
+            <rt>よし</rt>
+            <rp>)</rp>
+          </ruby>
         </Typography>
 
         <Box sx={{ flexGrow: 1, display: { md: "flex" } }}>

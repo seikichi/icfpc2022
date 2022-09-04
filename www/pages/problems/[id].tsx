@@ -11,6 +11,7 @@ import TableContainer from "@mui/material/TableContainer";
 import TableHead from "@mui/material/TableHead";
 import TableRow from "@mui/material/TableRow";
 import MuiLink from "@mui/material/Link";
+import Breadcrumbs from "@mui/material/Breadcrumbs";
 
 import { fetchRun, fetchSolutionList, RunResult, Solution } from "../../lib/db";
 import React from "react";
@@ -39,89 +40,100 @@ const Page: NextPage<Props> = ({ id, solutions }) => {
   const initial = `https://cdn.robovinci.xyz/imageframes/${id}.initial.png`;
 
   return (
-    <Stack spacing={2}>
-      <Typography component="h1" variant="h5">
-        Problem {id}
-      </Typography>
-      <>
-        {parseInt(id, 10) > 25 && (
+    <>
+      <Breadcrumbs aria-label="breadcrumb">
+        <Link href="/problems" passHref>
+          <MuiLink underline="hover" color="inherit">
+            問題一覧
+          </MuiLink>
+        </Link>
+        <Typography color="text.primary">1</Typography>
+      </Breadcrumbs>
+
+      <Stack spacing={2} sx={{ my: 2 }}>
+        <Typography component="h1" variant="h5">
+          Problem {id}
+        </Typography>
+        <>
+          {parseInt(id, 10) > 25 && (
+            <img
+              style={{
+                display: "inline",
+                border: "1px solid black",
+                marginRight: "5px",
+              }}
+              src={initial}
+              width="200"
+              alt="initial"
+            />
+          )}
           <img
-            style={{
-              display: "inline",
-              border: "1px solid black",
-              marginRight: "5px",
-            }}
-            src={initial}
+            src={input}
             width="200"
-            alt="initial"
+            alt="problem"
+            style={{ border: "1px solid black", display: "inline" }}
           />
-        )}
-        <img
-          src={input}
-          width="200"
-          alt="problem"
-          style={{ border: "1px solid black", display: "inline" }}
-        />
-      </>
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>#</TableCell>
-              <TableCell>スコア</TableCell>
-              <TableCell>AI</TableCell>
-              <TableCell>実行日時</TableCell>
-              <TableCell>時間(秒)</TableCell>
-              <TableCell>出力</TableCell>
-              <TableCell>ISL</TableCell>
-              <TableCell>コミット</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {solutions.map((s, i) => {
-              const url = `https://github.com/seikichi/icfpc2022/commit/${s.commit}`;
-              const output = `https://d30a5x02adw8tj.cloudfront.net/${s.runId}/${s.problemId}.png`;
-              const isl = `https://d30a5x02adw8tj.cloudfront.net/${s.runId}/${s.problemId}.isl`;
-              return (
-                <TableRow key={i}>
-                  <TableCell>{i + 1}</TableCell>
-                  <TableCell>{s.score}</TableCell>
-                  <TableCell>{s.ai}</TableCell>
-                  <TableCell>
-                    <Link href={`/runs/${s.runId}`} passHref>
-                      <MuiLink>
-                        {s.date
-                          ? new Date(s.date * 1000).toLocaleString()
-                          : "unknown"}
-                      </MuiLink>
-                    </Link>
-                  </TableCell>
-                  <TableCell>{s.time ?? "-"}</TableCell>
-                  <TableCell>
-                    <img
-                      style={{ border: "1px solid black" }}
-                      src={output}
-                      width="80"
-                      alt="output"
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Link href={isl} passHref>
-                      <MuiLink target="_blank">{s.problemId}.isl</MuiLink>
-                    </Link>
-                  </TableCell>
-                  <TableCell>
-                    <Link href={url} passHref>
-                      <MuiLink target="_blank">{s.commit}</MuiLink>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Stack>
+        </>
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>#</TableCell>
+                <TableCell>スコア</TableCell>
+                <TableCell>AI</TableCell>
+                <TableCell>実行日時</TableCell>
+                <TableCell>時間(秒)</TableCell>
+                <TableCell>出力</TableCell>
+                <TableCell>ISL</TableCell>
+                <TableCell>コミット</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {solutions.map((s, i) => {
+                const url = `https://github.com/seikichi/icfpc2022/commit/${s.commit}`;
+                const output = `https://d30a5x02adw8tj.cloudfront.net/${s.runId}/${s.problemId}.png`;
+                const isl = `https://d30a5x02adw8tj.cloudfront.net/${s.runId}/${s.problemId}.isl`;
+                return (
+                  <TableRow key={i}>
+                    <TableCell>{i + 1}</TableCell>
+                    <TableCell>{s.score}</TableCell>
+                    <TableCell>{s.ai}</TableCell>
+                    <TableCell>
+                      <Link href={`/runs/${s.runId}`} passHref>
+                        <MuiLink>
+                          {s.date
+                            ? new Date(s.date * 1000).toLocaleString()
+                            : "unknown"}
+                        </MuiLink>
+                      </Link>
+                    </TableCell>
+                    <TableCell>{s.time ?? "-"}</TableCell>
+                    <TableCell>
+                      <img
+                        style={{ border: "1px solid black" }}
+                        src={output}
+                        width="80"
+                        alt="output"
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Link href={isl} passHref>
+                        <MuiLink target="_blank">{s.problemId}.isl</MuiLink>
+                      </Link>
+                    </TableCell>
+                    <TableCell>
+                      <Link href={url} passHref>
+                        <MuiLink target="_blank">{s.commit}</MuiLink>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Stack>
+    </>
   );
 };
 
