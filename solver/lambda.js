@@ -16,12 +16,21 @@ exports.handler = async function (event, _context) {
     `${runId}`,
   ];
 
-  child_process.spawnSync(command, args, {
-    env: {
-      ...event.env,
-      ...process.env,
-      RUST_BACKTRACE: "1",
-      COMMIT: commit,
-    },
-  });
+  console.log("args", args);
+
+  try {
+    const result = child_process.spawnSync(command, args, {
+      env: {
+        ...event.env,
+        ...process.env,
+        RUST_BACKTRACE: "1",
+        COMMIT: commit,
+      },
+      encoding: "utf-8",
+    });
+    console.log("stdout:", result.stdout);
+    console.log("stderr:", result.stderr);
+  } catch (e) {
+    console.log("error:", e);
+  }
 };
