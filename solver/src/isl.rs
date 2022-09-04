@@ -96,6 +96,17 @@ pub enum Move {
         b: BlockId,
     },
 }
+impl Move {
+    pub fn convert_block_id(&mut self, id: &BlockId) {
+        match self {
+            Move::PCut { block_id, .. } => *block_id = id.clone(),
+            Move::LCut { block_id, .. } => *block_id = id.clone(),
+            Move::Color { block_id, .. } => *block_id = id.clone(),
+            // Swap, Mergeはできない
+            _ => unimplemented!(),
+        }
+    }
+}
 impl Display for Move {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
