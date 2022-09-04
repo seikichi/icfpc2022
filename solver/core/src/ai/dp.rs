@@ -50,7 +50,7 @@ impl HeadAI for DpAI {
             let mut merge_ai = MergeAI::new();
             ret = merge_ai.solve(image, initial_state);
             initial_block_id = merge_ai.merged_block_id();
-            simulator::simulate_all(&ret, &self.initial_state).unwrap();
+            self.initial_state = simulator::simulate_all(&ret, &self.initial_state).unwrap();
         }
         self.initial_block = self
             .initial_state
