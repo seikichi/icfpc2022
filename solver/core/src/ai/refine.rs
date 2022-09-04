@@ -1,6 +1,3 @@
-use std::thread::current;
-use std::time::Instant;
-
 use crate::ai;
 use crate::image;
 use crate::image::Image;
