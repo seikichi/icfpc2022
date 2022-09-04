@@ -129,14 +129,14 @@ impl DpAI {
             // PCut
             for lw in 1..w {
                 for lh in 1..h {
-                    nprogram.0.push(Move::PCut {
+                    let mv = Move::PCut {
                         block_id: BlockId::default(),
                         point: self.convert_point(x + lw, y + lh),
-                    });
+                    };
                     let dx = [0, lw, lw, 0];
                     let dy = [0, 0, lh, lh];
                     let mut nlcost = simulator::move_cost_without_state(
-                        &nprogram.0[0],
+                        &mv,
                         target_area,
                         self.image.width(),
                         self.image.height(),
@@ -154,22 +154,22 @@ impl DpAI {
                     if ncost + nlcost < ret.0 {
                         ret.0 = ncost + nlcost;
                         ret.1 = nprogram.clone();
+                        ret.1 .0.push(mv);
                         ret.2 = nlchilds;
                     }
-                    nprogram.0.pop().unwrap();
                 }
             }
             // LCut
             for lw in 1..w {
-                nprogram.0.push(Move::LCut {
+                let mv = Move::LCut {
                     block_id: BlockId::default(),
                     orientation: Orientation::Vertical,
                     line_number: self.convert_point(x + lw, y).x,
-                });
+                };
                 let dx = [0, lw];
                 let dy = [0, 0];
                 let mut nlcost = simulator::move_cost_without_state(
-                    &nprogram.0[0],
+                    &mv,
                     target_area,
                     self.image.width(),
                     self.image.height(),
@@ -187,20 +187,20 @@ impl DpAI {
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
                     ret.1 = nprogram.clone();
+                    ret.1 .0.push(mv);
                     ret.2 = nlchilds;
                 }
-                nprogram.0.pop().unwrap();
             }
             for lh in 1..h {
-                nprogram.0.push(Move::LCut {
+                let mv = Move::LCut {
                     block_id: BlockId::default(),
                     orientation: Orientation::Horizontal,
                     line_number: self.convert_point(x, y + lh).y,
-                });
+                };
                 let dx = [0, 0];
                 let dy = [0, lh];
                 let mut nlcost = simulator::move_cost_without_state(
-                    &nprogram.0[0],
+                    &mv,
                     target_area,
                     self.image.width(),
                     self.image.height(),
@@ -218,9 +218,9 @@ impl DpAI {
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
                     ret.1 = nprogram.clone();
+                    ret.1 .0.push(mv);
                     ret.2 = nlchilds;
                 }
-                nprogram.0.pop().unwrap();
             }
         }
         self.memo[x][y][w][h][color_id].0 = ret.0;
