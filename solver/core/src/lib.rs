@@ -41,7 +41,7 @@ struct Opt {
     #[structopt(long = "refine-algorithm", default_value = "annealing")]
     refine_algorithm: String,
 
-    #[structopt(long = "refine-initial-temperature", default_value = "100.0")]
+    #[structopt(long = "refine-initial-temperature", default_value = "5.0")]
     refine_initial_temperature: f64,
 
     #[structopt(long = "annealing-seconds", default_value = "10")]
