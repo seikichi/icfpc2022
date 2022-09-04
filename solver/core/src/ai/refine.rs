@@ -1,5 +1,9 @@
+use std::thread::current;
+use std::time::Instant;
+
 use crate::ai;
 use crate::image;
+use crate::image::Image;
 use crate::isl::*;
 use crate::simulator;
 use crate::simulator::calc_score;
@@ -8,8 +12,14 @@ use crate::simulator::State;
 use log::info;
 use rand::Rng;
 
+pub enum OptimizeAlgorithm {
+    HillClimbing,
+    Annealing,
+}
+
 pub struct RefineAi {
     pub n_iters: usize,
+    pub algorithm: OptimizeAlgorithm,
 }
 
 impl ai::ChainedAI for RefineAi {
@@ -21,109 +31,160 @@ impl ai::ChainedAI for RefineAi {
     ) -> Program {
         // TODO seed_from_u64
         let mut rng = rand::thread_rng();
-        let mut best_program = initial_program.clone();
-        let mut best_score = simulator::calc_score(initial_program, image, initial_state).unwrap();
+
         let mut prev_program = initial_program.clone();
+        let mut current_score =
+            simulator::calc_score(initial_program, image, initial_state).unwrap();
+
+        let mut best_program = initial_program.clone();
+        let mut best_score = current_score;
+
+        let mut temperature;
+        let initial_temperature = 1.0;
+
         for iter in 0..self.n_iters {
-            let mut next_program = prev_program.clone();
-            if next_program.0.len() == 0 {
+            // tweak temperature
+            let progress = (iter as f64) / (self.n_iters as f64);
+            temperature = initial_temperature * (1.0 - progress) * (-progress).exp2();
+
+            if prev_program.0.len() == 0 {
                 break;
             }
-            let t = rng.gen_range(0..next_program.0.len());
-            let mv = next_program.0[t].clone();
-            match mv {
-                // TODO swap color timing
-                Move::PCut {
-                    ref block_id,
-                    point,
-                } => {
-                    let r = rng.gen_range(0..2);
-                    if r == 0 {
-                        // change PCut point
-                        let dx = rng.gen_range(-5..=5);
-                        let dy = rng.gen_range(-5..=5);
-                        let npoint = Point::new(point.x + dx, point.y + dy);
-                        next_program.0[t] = Move::PCut {
-                            block_id: block_id.clone(),
-                            point: npoint,
-                        };
-                    } else if r == 1 {
-                        next_program.0.remove(t);
-                        if let Some(result) = Self::remove_all_child(&next_program, block_id) {
-                            next_program = result;
-                        } else {
-                            continue;
-                        }
+            let (candidate_program, t) =
+                match self.make_neighbor(&prev_program, image, initial_state, &mut rng) {
+                    Some(x) => x,
+                    None => continue,
+                };
+            let new_score = match calc_score(&candidate_program, image, &initial_state) {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
+
+            // 新しい解を受理するか決める
+            let accept = match self.algorithm {
+                OptimizeAlgorithm::HillClimbing => new_score < current_score,
+                OptimizeAlgorithm::Annealing => {
+                    if new_score < current_score {
+                        true
+                    } else {
+                        // new_score >= current_score
+                        let delta = (new_score - current_score) as f64;
+                        let accept_prob = (-delta / temperature).exp();
+                        rng.gen::<f64>() < accept_prob
                     }
                 }
-                Move::LCut {
-                    ref block_id,
-                    orientation,
-                    line_number,
-                } => {
-                    // TODO
-                    let r = rng.gen_range(0..2);
-                    if r == 0 {
-                        // change LCut position
-                        let d = rng.gen_range(-5..=5);
-                        next_program.0[t] = Move::LCut {
-                            block_id: block_id.clone(),
-                            orientation,
-                            line_number: line_number + d,
-                        };
-                    } else {
-                        next_program.0.remove(t);
-                        if let Some(result) = Self::remove_all_child(&next_program, block_id) {
-                            next_program = result;
-                        } else {
-                            continue;
-                        }
-                    }
-                }
-                Move::Color {
-                    ref block_id,
-                    color: _,
-                } => {
-                    let mut state = initial_state.clone();
-                    simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
-                    let block = state.blocks[block_id];
-                    let r = rng.gen_range(0..2);
-                    let color = if r == 0 {
-                        // random sampling
-                        let x = block.p.x + rng.gen_range(0..block.size.x);
-                        let y = block.p.y + rng.gen_range(0..block.size.y);
-                        image.0[y as usize][x as usize]
-                    } else {
-                        // average
-                        image.average(block.p, block.size)
-                    };
-                    next_program.0[t] = Move::Color {
-                        block_id: block_id.clone(),
-                        color,
-                    };
-                }
-                _ => {
-                    // Do nothing
-                    continue;
-                }
-            }
-            if let Ok(score) = calc_score(&next_program, image, &initial_state) {
-                if score < best_score {
-                    info!(
-                        "iter: {:3}, score: {:7}, move: {}",
-                        iter, score, prev_program.0[t]
-                    );
-                    best_score = score;
-                    best_program = next_program.clone();
-                    prev_program = next_program;
+            };
+
+            if accept {
+                info!(
+                    "iter: {:3}, score: {:7}, move: {}",
+                    iter, new_score, prev_program.0[t]
+                );
+                prev_program = candidate_program;
+                current_score = new_score;
+
+                if new_score < best_score {
+                    best_score = new_score;
+                    best_program = prev_program.clone();
                 }
             }
         }
-        return best_program;
+
+        best_program
     }
 }
 
 impl RefineAi {
+    // 近傍解を作る
+    fn make_neighbor(
+        &self,
+        prev_program: &Program,
+        image: &Image,
+        initial_state: &State,
+        rng: &mut impl Rng,
+    ) -> Option<(Program, usize)> {
+        let mut next_program = prev_program.clone();
+        let t = rng.gen_range(0..next_program.0.len());
+        let mv = next_program.0[t].clone();
+        match mv {
+            // TODO swap color timing
+            Move::PCut {
+                ref block_id,
+                point,
+            } => {
+                let r = rng.gen_range(0..2);
+                if r == 0 {
+                    // change PCut point
+                    let dx = rng.gen_range(-5..=5);
+                    let dy = rng.gen_range(-5..=5);
+                    let npoint = Point::new(point.x + dx, point.y + dy);
+                    next_program.0[t] = Move::PCut {
+                        block_id: block_id.clone(),
+                        point: npoint,
+                    };
+                } else if r == 1 {
+                    next_program.0.remove(t);
+                    if let Some(result) = Self::remove_all_child(&next_program, block_id) {
+                        next_program = result;
+                    } else {
+                        return None;
+                    }
+                }
+            }
+            Move::LCut {
+                ref block_id,
+                orientation,
+                line_number,
+            } => {
+                // TODO
+                let r = rng.gen_range(0..2);
+                if r == 0 {
+                    // change LCut position
+                    let d = rng.gen_range(-5..=5);
+                    next_program.0[t] = Move::LCut {
+                        block_id: block_id.clone(),
+                        orientation,
+                        line_number: line_number + d,
+                    };
+                } else {
+                    next_program.0.remove(t);
+                    if let Some(result) = Self::remove_all_child(&next_program, block_id) {
+                        next_program = result;
+                    } else {
+                        return None;
+                    }
+                }
+            }
+            Move::Color {
+                ref block_id,
+                color: _,
+            } => {
+                let mut state = initial_state.clone();
+                simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
+                let block = state.blocks[block_id];
+                let r = rng.gen_range(0..2);
+                let color = if r == 0 {
+                    // random sampling
+                    let x = block.p.x + rng.gen_range(0..block.size.x);
+                    let y = block.p.y + rng.gen_range(0..block.size.y);
+                    image.0[y as usize][x as usize]
+                } else {
+                    // average
+                    image.average(block.p, block.size)
+                };
+                next_program.0[t] = Move::Color {
+                    block_id: block_id.clone(),
+                    color,
+                };
+            }
+            _ => {
+                // Do nothing
+                return None;
+            }
+        }
+        Some((next_program, t))
+    }
+
     fn remove_all_child(prev_program: &Program, target_block_id: &BlockId) -> Option<Program> {
         let mut next_program = Program(vec![]);
         for i in 0..prev_program.0.len() {

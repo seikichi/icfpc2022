@@ -70,7 +70,8 @@ const Page: NextPage<Props> = ({ id, solutions }) => {
               <TableCell>#</TableCell>
               <TableCell>スコア</TableCell>
               <TableCell>AI</TableCell>
-              <TableCell>実行ID</TableCell>
+              <TableCell>実行日時</TableCell>
+              <TableCell>時間(秒)</TableCell>
               <TableCell>出力</TableCell>
               <TableCell>ISL</TableCell>
               <TableCell>コミット</TableCell>
@@ -88,9 +89,14 @@ const Page: NextPage<Props> = ({ id, solutions }) => {
                   <TableCell>{s.ai}</TableCell>
                   <TableCell>
                     <Link href={`/runs/${s.runId}`} passHref>
-                      <MuiLink>{s.runId}</MuiLink>
+                      <MuiLink>
+                        {s.date
+                          ? new Date(s.date * 1000).toLocaleString()
+                          : "unknown"}
+                      </MuiLink>
                     </Link>
                   </TableCell>
+                  <TableCell>{s.time ?? "-"}</TableCell>
                   <TableCell>
                     <img
                       style={{ border: "1px solid black" }}

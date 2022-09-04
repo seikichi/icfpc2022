@@ -26,6 +26,8 @@ export interface RunResult {
     commit: string;
     problemId: number;
     score: number;
+    time: number | null;
+    date: number | null;
   }[];
 }
 
@@ -35,6 +37,8 @@ export interface Solution {
   problemId: number;
   score: number;
   ai: string;
+  time: number | null;
+  date: number | null;
 }
 
 // .env に書け
@@ -138,7 +142,12 @@ export async function fetchSolutionList(id: string): Promise<Solution[]> {
     const problemId = parseInt(sk.split("#")[1], 10);
     const score = parseInt(item["GSI1SK"]["N"]!, 10);
 
-    results.push({ runId, commit, problemId, score, ai });
+    const dateS = item["ExecDate"]?.N;
+    const timeS = item["ExecTime"]?.N;
+    const date = dateS ? parseInt(dateS, 10) : null;
+    const time = timeS ? parseInt(timeS, 10) : null;
+
+    results.push({ runId, commit, problemId, score, ai, date, time });
   }
   return results;
 }
@@ -180,8 +189,12 @@ export async function fetchRun(id: string): Promise<RunResult> {
       const commit = item["Commit"]["S"]!;
       const problemId = parseInt(sk.split("#")[1], 10);
       const score = parseInt(item["GSI1SK"]["N"]!, 10);
+      const dateS = item["ExecDate"]?.N;
+      const timeS = item["ExecTime"]?.N;
+      const date = dateS ? parseInt(dateS, 10) : null;
+      const time = timeS ? parseInt(timeS, 10) : null;
       result.score += score;
-      result.results.push({ problemId, score, commit });
+      result.results.push({ problemId, score, commit, date, time });
     }
   }
 
