@@ -64,8 +64,16 @@ impl HeadAI for DpAI {
         }
 
         // color sampling
-        self.sampled_color =
-            image::k_means_color_sampling(image, self.sample_color_num - 1, 20, &mut self.rng);
+        self.sampled_color = image::k_means_color_sampling(
+            image,
+            self.sample_color_num - 1,
+            20,
+            self.topleft().x as usize,
+            self.topleft().y as usize,
+            self.width() as usize,
+            self.height() as usize,
+            &mut self.rng,
+        );
         self.sampled_color.push(self.initial_block.color);
         self.sampled_color.reverse();
 

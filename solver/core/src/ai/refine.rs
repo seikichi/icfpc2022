@@ -4,6 +4,7 @@ use crate::image::Image;
 use crate::isl::*;
 use crate::simulator;
 use crate::simulator::calc_score;
+use crate::simulator::simulate_all;
 use crate::simulator::simulate_partial;
 use crate::simulator::State;
 use log::info;
@@ -56,7 +57,11 @@ impl ai::ChainedAI for RefineAi {
                 };
             let new_score = match calc_score(&candidate_program, image, &initial_state) {
                 Ok(s) => s,
-                Err(_) => continue,
+                Err(_err) => {
+                    // assert!(!description.contains("DpAI"));
+                    // log::debug!("{} {}", description, _err);
+                    continue;
+                }
             };
 
             // 新しい解を受理するか決める
@@ -99,12 +104,23 @@ impl RefineAi {
         initial_state: &State,
         rng: &mut impl Rng,
     ) -> Option<(Program, String)> {
+        let description;
         let mut next_program = prev_program.clone();
+        if rng.gen_range(0..100) == 0 {
+            // 1/100 の確率でランダムにDpAIで分割する
+            let end_state = simulate_all(&prev_program, initial_state).unwrap();
+            let block_id = end_state.sample_active_block(rng);
+            let next_program =
+                self.solve_by_dp_ai_one_block(next_program, &block_id, image, initial_state, rng);
+            if prev_program.len() == next_program.len() {
+                return None;
+            }
+            description = format!("Divide by DpAI: {}", block_id);
+            return Some((next_program, description));
+        }
         let t = rng.gen_range(0..next_program.0.len());
         let mv = next_program.0[t].clone();
-        let mut description = "nop".to_string();
         match mv {
-            // TODO swap color timing
             Move::PCut {
                 ref block_id,
                 point,
@@ -223,8 +239,8 @@ impl RefineAi {
         let mut program = program;
         let mut state = initial_state.clone();
         let end_state = simulator::simulate_all(&program, &mut state).unwrap();
-        let d = rng.gen_range(2..=4);
-        let c = rng.gen_range(3..=6);
+        let d = rng.gen_range(2..=6);
+        let c = rng.gen_range(3..=8);
         let temp_state = end_state.block_state(block_id.clone());
         let mut dp_ai = ai::DpAI::new(d, c);
         let dp_program = dp_ai.solve(image, &temp_state);

@@ -144,19 +144,28 @@ pub fn k_means_color_sampling(
     image: &Image,
     n_colors: usize,
     n_iter: usize,
+    sx: usize,
+    sy: usize,
+    w: usize,
+    h: usize,
     rng: &mut impl rand::Rng,
 ) -> Vec<Color> {
     // 初期解をいい感じに作る
+    assert!(sx + w <= image.width());
+    assert!(sy + h <= image.height());
     let mut initial_samples: Vec<Color> = vec![];
-    let x = rng.gen_range(0..image.width());
-    let y = rng.gen_range(0..image.height());
-    let c = image.0[y][x];
+    let c = {
+        let x = rng.gen_range(sx..(sx + w));
+        let y = rng.gen_range(sy..(sy + h));
+        image.0[y][x]
+    };
     initial_samples.push(c);
     while initial_samples.len() < n_colors {
         // 最も近いサンプルまでの二乗距離
-        let mut nsd = vec![vec![0.0; image.width()]; image.height()];
-        for (y, row) in image.0.iter().enumerate() {
-            for (x, &pixel) in row.iter().enumerate() {
+        let mut nsd = vec![vec![0.0; w]; h];
+        for dy in 0..h {
+            for dx in 0..w {
+                let pixel = image.0[sy + dy][sx + dx];
                 let mut min_diff = 10000000.0;
                 for &sc in &initial_samples {
                     let diff = (sc - pixel).length_squared();
@@ -164,18 +173,18 @@ pub fn k_means_color_sampling(
                         min_diff = diff;
                     }
                 }
-                nsd[y][x] = min_diff;
+                nsd[dy][dx] = min_diff;
             }
         }
         // SD(x) / ∑SD(x) の確率でピクセルを選ぶ
         let d_sum = nsd.iter().map(|row| row.iter().sum::<f32>()).sum::<f32>();
         let p = rng.gen::<f32>();
         let mut cumsum = 0.0;
-        'outer: for (y, row) in nsd.into_iter().enumerate() {
-            for (x, sd) in row.into_iter().enumerate() {
+        'outer: for (dy, row) in nsd.into_iter().enumerate() {
+            for (dx, sd) in row.into_iter().enumerate() {
                 cumsum += sd / d_sum;
                 if p < cumsum {
-                    initial_samples.push(image.0[y][x]);
+                    initial_samples.push(image.0[sy + dy][sx + dx]);
                     break 'outer;
                 }
             }
@@ -188,8 +197,9 @@ pub fn k_means_color_sampling(
         let mut sum = vec![Color::ZERO; samples.len()];
         let mut count = vec![0; samples.len()];
 
-        for row in &image.0 {
-            for &pixel in row {
+        for dy in 0..h {
+            for dx in 0..w {
+                let pixel = image.0[sy + dy][sx + dx];
                 let mut min_diff = 10000000.0;
                 let mut best_cluster = 0;
                 for (i_cluster, &color) in samples.iter().enumerate() {
