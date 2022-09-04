@@ -56,6 +56,7 @@ const Page: NextPage<Props> = ({ result }) => {
               <TableCell>スコア</TableCell>
               <TableCell>入力</TableCell>
               <TableCell>出力</TableCell>
+              <TableCell>ISL</TableCell>
               <TableCell>コミット</TableCell>
             </TableRow>
           </TableHead>
@@ -64,6 +65,7 @@ const Page: NextPage<Props> = ({ result }) => {
               const url = `https://github.com/seikichi/icfpc2022/commit/${r.commit}`;
               const input = `https://cdn.robovinci.xyz/imageframes/${r.problemId}.png`;
               const output = `https://d30a5x02adw8tj.cloudfront.net/${result.id}/${r.problemId}.png`;
+              const isl = `https://d30a5x02adw8tj.cloudfront.net/${result.id}/${r.problemId}.isl`;
               return (
                 <TableRow key={r.problemId}>
                   <TableCell>
@@ -73,10 +75,25 @@ const Page: NextPage<Props> = ({ result }) => {
                   </TableCell>
                   <TableCell>{r.score}</TableCell>
                   <TableCell>
-                    <img src={input} width="80" alt="input" />
+                    <img
+                      style={{ border: "1px solid black" }}
+                      src={input}
+                      width="80"
+                      alt="input"
+                    />
                   </TableCell>
                   <TableCell>
-                    <img src={output} width="80" alt="output" />
+                    <img
+                      style={{ border: "1px solid black" }}
+                      src={output}
+                      width="80"
+                      alt="output"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Link href={isl} passHref>
+                      <MuiLink target="_blank">{r.problemId}.isl</MuiLink>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <Link href={url} passHref>
