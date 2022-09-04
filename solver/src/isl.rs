@@ -31,6 +31,13 @@ impl BlockId {
         }
         return true;
     }
+    // BlockIdの先頭をidに書き換える
+    pub fn convert_initial_block_id(&mut self, id: &BlockId) {
+        self.0.pop_front();
+        let mut temp = self.0.clone();
+        self.0 = id.0.clone();
+        self.0.append(&mut temp);
+    }
 }
 
 pub type Point = IVec2;
@@ -177,21 +184,21 @@ impl Program {
         return self.0.len();
     }
     #[allow(dead_code)]
-    pub fn convert_initial_block_id(&mut self, id: u32) {
+    pub fn convert_initial_block_id(&mut self, id: &BlockId) {
         for mv in self.0.iter_mut() {
             match mv {
                 Move::PCut { block_id, .. } => {
-                    block_id.0[0] = id;
+                    block_id.convert_initial_block_id(&id);
                 }
                 Move::LCut { block_id, .. } => {
-                    block_id.0[0] = id;
+                    block_id.convert_initial_block_id(&id);
                 }
                 Move::Color { block_id, .. } => {
-                    block_id.0[0] = id;
+                    block_id.convert_initial_block_id(&id);
                 }
                 Move::Swap { a, b } => {
-                    a.0[0] = id;
-                    b.0[0] = id;
+                    a.convert_initial_block_id(&id);
+                    b.convert_initial_block_id(&id);
                 }
                 Move::Merge { .. } => {
                     panic!("Can't use Merge")
