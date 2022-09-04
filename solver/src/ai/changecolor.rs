@@ -12,14 +12,14 @@ impl HeadAI for ChangeColorAI {
         let mut programs = vec![];
         for (block_id, block) in initial_state.blocks.clone().iter() {
             let color_ave = image.average(block.p, block.size);
-            let color_occ = image.most_occurred(block.p, block.size);
+            let color_majority = image.majority(block.p, block.size);
             let next_move_ave = isl::Move::Color {
                 block_id: block_id.clone(),
                 color: color_ave,
             };
-            let next_move_occ = isl::Move::Color {
+            let next_move_majority = isl::Move::Color {
                 block_id: block_id.clone(),
-                color: color_occ,
+                color: color_majority,
             };
             let sim_before = simulator::calc_partial_one_color_similarity(
                 block.p,
@@ -29,18 +29,18 @@ impl HeadAI for ChangeColorAI {
             );
             let sim_ave =
                 simulator::calc_partial_one_color_similarity(block.p, block.size, color_ave, image);
-            let sim_occ =
-                simulator::calc_partial_one_color_similarity(block.p, block.size, color_occ, image);
+            let sim_majority =
+                simulator::calc_partial_one_color_similarity(block.p, block.size, color_majority, image);
             let move_cost_ave =
                 simulator::move_cost(initial_state, &next_move_ave, image.width(), image.height())
                     .unwrap();
-            let move_cost_occ =
-                simulator::move_cost(initial_state, &next_move_occ, image.width(), image.height())
+            let move_cost_majority =
+                simulator::move_cost(initial_state, &next_move_majority, image.width(), image.height())
                     .unwrap();
-            if sim_ave + move_cost_ave >= sim_before && sim_occ + move_cost_occ >= sim_before {
+            if sim_ave + move_cost_ave >= sim_before && sim_majority + move_cost_majority >= sim_before {
                 continue;
-            } else if sim_ave + move_cost_ave >= sim_occ + move_cost_occ {
-                programs.push(next_move_occ)
+            } else if sim_ave + move_cost_ave >= sim_majority + move_cost_majority {
+                programs.push(next_move_majority)
             } else {
                 programs.push(next_move_ave)
             }
