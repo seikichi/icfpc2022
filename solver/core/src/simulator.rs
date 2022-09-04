@@ -851,4 +851,18 @@ mod tests {
         let expected = (5.0f32 * (5.0 * 3.0) / (3.0 * 3.0)).round() as i64;
         assert_eq!(expected, actual);
     }
+
+    #[test]
+    fn reproduce_problem_8() {
+        let image = crate::image::open("../problems/8.png").unwrap();
+        let state = State::initial_state(400, 400, 0);
+        let program = vec![
+            Move::PCut { block_id: BlockId::new(&vec![0]), point: Point::new(37, 233) },
+            Move::LCut { block_id: BlockId::new(&vec![0, 2]), orientation: Orientation::Vertical, line_number: 354 },
+            Move::Color { block_id: BlockId::new(&vec![0, 2, 0]), color: Color::ZERO },
+            Move::Color { block_id: BlockId::new(&vec![0, 1]), color: Color::new(254.0, 254.0, 254.0, 255.0) / 255.0 },
+        ];
+        let score = calc_score(&Program(program), &image, &state).unwrap();
+        assert_eq!(138571, score);
+    }
 }
