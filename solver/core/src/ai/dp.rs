@@ -1,10 +1,7 @@
-use std::collections::HashMap;
-
 use crate::ai::HeadAI;
 use crate::image;
 use crate::isl::*;
 use crate::simulator;
-use crate::simulator::SimpleBlock;
 use crate::simulator::State;
 use rand::rngs::ThreadRng;
 
@@ -98,29 +95,29 @@ impl DpAI {
         if self.memo[x][y][w][h][color_id].1.is_some() {
             return self.memo[x][y][w][h][color_id].0;
         }
-        let state = self.make_state(x, y, w, h, color_id);
         let mut ret = (
             self.calc_similality(x, y, w, h, color_id),
             Program(vec![]),
             vec![],
         );
+        let lt = self.convert_point(x, y);
+        let rb = self.convert_point(x + w, y + h);
+        let target_area = ((rb.x - lt.x) * (rb.y - lt.y)) as usize;
         for c in 0..self.sampled_color.len() {
             let mut nprogram = Program(vec![]);
             let mut ncost = 0;
             if c != color_id {
                 // Color
                 nprogram.0.push(Move::Color {
-                    block_id: BlockId::new(&vec![]),
+                    block_id: BlockId::default(),
                     color: self.sampled_color[c],
                 });
-                ncost += simulator::move_cost(
-                    &state,
+                ncost += simulator::move_cost_without_state(
                     &nprogram.0[0],
+                    target_area,
                     self.image.width(),
                     self.image.height(),
-                )
-                .unwrap();
-                // let nstate = self.make_state(x, y, w, h, c);
+                );
                 let scost = self.calc_similality(x, y, w, h, c);
                 if ncost + scost < ret.0 {
                     assert!(nprogram.0.len() == 1);
@@ -133,18 +130,17 @@ impl DpAI {
             for lw in 1..w {
                 for lh in 1..h {
                     nprogram.0.push(Move::PCut {
-                        block_id: BlockId::new(&vec![]),
+                        block_id: BlockId::default(),
                         point: self.convert_point(x + lw, y + lh),
                     });
                     let dx = [0, lw, lw, 0];
                     let dy = [0, 0, lh, lh];
-                    let mut nlcost = simulator::move_cost(
-                        &state,
+                    let mut nlcost = simulator::move_cost_without_state(
                         &nprogram.0[0],
+                        target_area,
                         self.image.width(),
                         self.image.height(),
-                    )
-                    .unwrap();
+                    );
                     let mut nlchilds = vec![];
                     for i in 0..4 {
                         let nx = x + dx[i];
@@ -166,19 +162,18 @@ impl DpAI {
             // LCut
             for lw in 1..w {
                 nprogram.0.push(Move::LCut {
-                    block_id: BlockId::new(&vec![]),
+                    block_id: BlockId::default(),
                     orientation: Orientation::Vertical,
                     line_number: self.convert_point(x + lw, y).x,
                 });
                 let dx = [0, lw];
                 let dy = [0, 0];
-                let mut nlcost = simulator::move_cost(
-                    &state,
+                let mut nlcost = simulator::move_cost_without_state(
                     &nprogram.0[0],
+                    target_area,
                     self.image.width(),
                     self.image.height(),
-                )
-                .unwrap();
+                );
                 let mut nlchilds = vec![];
                 for i in 0..2 {
                     let nx = x + dx[i];
@@ -198,19 +193,18 @@ impl DpAI {
             }
             for lh in 1..h {
                 nprogram.0.push(Move::LCut {
-                    block_id: BlockId::new(&vec![]),
+                    block_id: BlockId::default(),
                     orientation: Orientation::Horizontal,
                     line_number: self.convert_point(x, y + lh).y,
                 });
                 let dx = [0, 0];
                 let dy = [0, lh];
-                let mut nlcost = simulator::move_cost(
-                    &state,
+                let mut nlcost = simulator::move_cost_without_state(
                     &nprogram.0[0],
+                    target_area,
                     self.image.width(),
                     self.image.height(),
-                )
-                .unwrap();
+                );
                 let mut nlchilds = vec![];
                 for i in 0..2 {
                     let nx = x + dx[i];
@@ -292,30 +286,36 @@ impl DpAI {
         }
         return ret;
     }
-    fn make_state(&self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> State {
-        let d = self.memo.len();
-        let l = self.topleft().x as usize + x * (self.width() / d);
-        let t = self.topleft().y as usize + y * (self.height() / d);
-        let pw = std::cmp::min((x + w) * (self.width() / d), self.width()) - l;
-        let ph = std::cmp::min((y + h) * (self.height() / d), self.height()) - t;
-        let mut blocks = HashMap::new();
-        blocks.insert(
-            BlockId::new(&vec![]),
-            SimpleBlock::new(
-                Point::new(l as i32, t as i32),
-                Point::new(pw as i32, ph as i32),
-                self.sampled_color[color_id],
-            ),
-        );
-        State {
-            blocks,
-            next_global_id: 1,
-        }
-    }
+    // fn make_state(&self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> State {
+    //     let d = self.memo.len();
+    //     let l = self.topleft().x as usize + x * (self.width() / d);
+    //     let t = self.topleft().y as usize + y * (self.height() / d);
+    //     let pw = std::cmp::min((x + w) * (self.width() / d), self.width()) - l;
+    //     let ph = std::cmp::min((y + h) * (self.height() / d), self.height()) - t;
+    //     let mut blocks = HashMap::new();
+    //     blocks.insert(
+    //         BlockId::new(&vec![]),
+    //         SimpleBlock::new(
+    //             Point::new(l as i32, t as i32),
+    //             Point::new(pw as i32, ph as i32),
+    //             self.sampled_color[color_id],
+    //         ),
+    //     );
+    //     State {
+    //         blocks,
+    //         next_global_id: 1,
+    //     }
+    // }
     fn convert_point(&self, x: usize, y: usize) -> Point {
         let d = self.memo.len();
-        let l = self.topleft().x + (x * (self.width() / d)) as i32;
-        let t = self.topleft().y + (y * (self.height() / d)) as i32;
+        let l = std::cmp::min(
+            self.width() as i32,
+            self.topleft().x + (x * (self.width() / d)) as i32,
+        );
+        let t = std::cmp::min(
+            self.height() as i32,
+            self.topleft().y + (y * (self.height() / d)) as i32,
+        );
         return Point::new(l, t);
     }
     // fn renumber_block_id(&self, sub_programs: &mut Vec<Program>) -> Program {
