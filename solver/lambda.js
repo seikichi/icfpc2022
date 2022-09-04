@@ -32,7 +32,8 @@ exports.handler = async function (event, _context) {
     console.log("stdout:", result.stdout);
     console.log("stderr:", result.stderr);
 
-    if (result.error) {
+    if (result.status && result.status > 0) {
+      console.log("Update Record");
       // Rust と JS どっちからも DynamoDB 書いてて厳しい...
       const {
         DynamoDBClient,
@@ -40,8 +41,8 @@ exports.handler = async function (event, _context) {
         UpdateItemCommand,
       } = require("@aws-sdk/client-dynamodb");
 
-      const pk = `R${runId}`;
-      const sk = `S#${runId}`;
+      const pk = `R#${runId}`;
+      const sk = `S#${problemId}`;
       const region = "ap-northeast-1";
       const TableName = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
       const client = new DynamoDBClient({ region });

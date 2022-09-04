@@ -2,7 +2,7 @@ use std::{collections::HashSet, fmt::Display};
 
 use glam::{IVec2, Vec4};
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
 pub struct BlockId(pub Vec<u32>);
 impl Display for BlockId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

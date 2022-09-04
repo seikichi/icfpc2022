@@ -2,6 +2,7 @@ use crate::ai::HeadAI;
 use crate::image;
 use crate::isl::*;
 use crate::simulator;
+use crate::simulator::BlockState;
 use crate::simulator::SimpleBlock;
 use crate::simulator::State;
 use rand::rngs::ThreadRng;
@@ -111,7 +112,7 @@ impl DpAI {
                 p: Point::new(0, 0),
                 size: Point::new(0, 0),
                 color: Color::ONE,
-                active: true,
+                state: BlockState::Active,
             },
         }
     }

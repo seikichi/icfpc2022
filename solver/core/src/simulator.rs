@@ -25,12 +25,24 @@ pub fn program_exec_error(line_number: usize, mv: Move, state: &State) -> Progra
     }
 }
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum BlockState {
+    Active,
+    Deleted,
+    Merged,
+}
+impl BlockState {
+    pub fn is_active(self) -> bool {
+        self == BlockState::Active
+    }
+}
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct SimpleBlock {
     pub p: Point,
     pub size: Point,
     pub color: Color,
-    pub active: bool,
+    pub state: BlockState,
 }
 impl SimpleBlock {
     pub fn new(p: Point, size: glam::IVec2, color: Color) -> Self {
@@ -38,7 +50,7 @@ impl SimpleBlock {
             p,
             size,
             color,
-            active: true,
+            state: BlockState::Active,
         }
     }
     #[allow(dead_code)]
@@ -48,11 +60,11 @@ impl SimpleBlock {
         self.partial_rasterize(glam::IVec2::ZERO, Point::new(w as i32, h as i32), image);
     }
     pub fn partial_rasterize(&self, p: Point, size: Point, image: &mut Image) {
-        if !self.active {
+        if self.state == BlockState::Deleted {
             return;
         }
         if self.color == INVALID_COLOR {
-            panic!("This block has INVALID_COLOR, which cannot be rasterized");
+            return;
         }
         let w = std::cmp::min((p.x + size.x) as usize, image.width());
         let h = std::cmp::min((p.y + size.y) as usize, image.height());
@@ -98,11 +110,12 @@ impl State {
             next_global_id: self.next_global_id,
         }
     }
+    #[allow(dead_code)]
     pub fn sample_active_block(&self, rng: &mut impl rand::Rng) -> BlockId {
         let blocks = self
             .blocks
             .iter()
-            .filter(|(_id, block)| block.active)
+            .filter(|(_id, block)| block.state.is_active())
             .collect::<Vec<_>>();
         let t = rng.gen_range(0..blocks.len());
         return blocks[t].0.clone();
@@ -176,7 +189,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 );
                 state.blocks.insert(next_id, next_simple_block);
             }
-            simple_block.active = false;
+            simple_block.state = BlockState::Deleted;
             state.blocks.insert(block_id.clone(), simple_block);
         }
         Move::LCut {
@@ -222,7 +235,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 );
                 state.blocks.insert(next_id, next_simple_block);
             }
-            simple_block.active = false;
+            simple_block.state = BlockState::Deleted;
             state.blocks.insert(block_id.clone(), simple_block);
         }
         Move::Color {
@@ -251,8 +264,8 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 .blocks
                 .insert(BlockId::new(&vec![state.next_global_id]), next_block);
             state.next_global_id += 1;
-            block1.active = false;
-            block2.active = false;
+            block1.state = BlockState::Merged;
+            block2.state = BlockState::Merged;
             state.blocks.insert(a.clone(), block1);
             state.blocks.insert(b.clone(), block2);
         }
@@ -315,10 +328,17 @@ pub fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
 
 fn rasterize_parital_state(p: Point, size: Point, state: &State, w: usize, h: usize) -> Image {
     let mut image = Image::new(w, h);
-    for (_, simple_block) in &state.blocks {
+
+    // ブロック a とブロック b がマージされてブロック c ができたとする。
+    // c を描画するよりも前に a と b が描画されることを保証するために
+    // ここでソートする
+    let mut blocks = state.blocks.iter().collect::<Vec<_>>();
+    blocks.sort_by(|(id1, _), (id2, _)| id1.cmp(id2));
+
+    for (_, simple_block) in blocks {
         simple_block.partial_rasterize(p, size, &mut image);
     }
-    return image;
+    image
 }
 
 pub fn calc_state_similarity(state: &State, target_image: &Image) -> i64 {
@@ -654,6 +674,72 @@ mod tests {
             ".....",
             "rrrrr",
             "rrrrr",
+        ]);
+
+        let actual = rasterize_state(&state, 5, 3);
+
+        eprint!("actual:\n{}", actual);
+        assert_eq!(expected, actual);
+    }
+
+    #[test]
+    fn test_simulate_merge_complex() {
+        let mut state = State::initial_state(5, 3);
+        simulate(
+            &mut state,
+            &Move::PCut {
+                block_id: BlockId::new(&vec![0]),
+                point: Point::new(2, 1),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId::new(&vec![0, 2]),
+                color: Color::new(1.0, 0.0, 0.0, 1.0),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId::new(&vec![0, 3]),
+                color: Color::new(0.0, 1.0, 0.0, 1.0),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Merge {
+                a: BlockId::new(&vec![0, 2]),
+                b: BlockId::new(&vec![0, 3]),
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::LCut {
+                block_id: BlockId::new(&vec![1]),
+                orientation: Orientation::Horizontal,
+                line_number: 2,
+            },
+        )
+        .unwrap();
+        simulate(
+            &mut state,
+            &Move::Color {
+                block_id: BlockId::new(&vec![1, 1]),
+                color: Color::new(0.0, 0.0, 1.0, 1.0),
+            },
+        )
+        .unwrap();
+
+        #[rustfmt::skip]
+        let expected = Image::from_string_array(&[
+            ".....",
+            "ggrrr",
+            "bbbbb",
         ]);
 
         let actual = rasterize_state(&state, 5, 3);
