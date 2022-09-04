@@ -35,11 +35,14 @@ struct Opt {
     #[structopt(short = "r", long = "run-id")]
     run_id: Option<String>,
 
-    #[structopt(long = "refine-iters", default_value = "50000")]
+    #[structopt(long = "refine-iters", default_value = "30000")]
     refine_iters: usize,
 
     #[structopt(long = "refine-algorithm", default_value = "annealing")]
     refine_algorithm: String,
+
+    #[structopt(long = "refine-initial-temperature", default_value = "100.0")]
+    refine_initial_temperature: f64,
 
     #[structopt(long = "annealing-seconds", default_value = "10")]
     annealing_seconds: u64,
@@ -79,6 +82,7 @@ fn parse_ai_string(
                     "annealing" => ai::OptimizeAlgorithm::Annealing,
                     x => bail!("'{x}' is not OptimizeAlgorithm"),
                 },
+                initial_temperature: opt.refine_initial_temperature,
             }),
             "Annealing" => Box::new(ai::AnnealingAI {
                 time_limit: Duration::from_secs(opt.annealing_seconds),

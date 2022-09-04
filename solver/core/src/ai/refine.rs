@@ -20,6 +20,7 @@ pub enum OptimizeAlgorithm {
 pub struct RefineAi {
     pub n_iters: usize,
     pub algorithm: OptimizeAlgorithm,
+    pub initial_temperature: f64,
 }
 
 impl ai::ChainedAI for RefineAi {
@@ -40,12 +41,11 @@ impl ai::ChainedAI for RefineAi {
         let mut best_score = current_score;
 
         let mut temperature;
-        let initial_temperature = 1.0;
 
         for iter in 0..self.n_iters {
             // tweak temperature
             let progress = (iter as f64) / (self.n_iters as f64);
-            temperature = initial_temperature * (1.0 - progress) * (-progress).exp2();
+            temperature = self.initial_temperature * (1.0 - progress) * (-progress).exp2();
 
             if prev_program.0.len() == 0 {
                 break;
