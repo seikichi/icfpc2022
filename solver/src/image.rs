@@ -22,7 +22,6 @@ impl Image {
     pub fn area(&self) -> usize {
         self.width() * self.height()
     }
-    #[allow(dead_code)]
     pub fn average(&self, p: isl::Point, size: isl::Point) -> Color {
         let mut sum = Color::ZERO;
         for y in p.y..(p.y + size.y) {
@@ -31,6 +30,32 @@ impl Image {
             }
         }
         return sum / (size.y * size.x) as f32;
+    }
+    #[allow(dead_code)]
+    pub fn most_occurred(&self, p: isl::Point, size: isl::Point) -> Color {
+        // TODO: 高速化（release buildだとまだ早い）
+        let mut all_pixels = vec![];
+        for y in p.y..(p.y + size.y) {
+            for x in p.x..(p.x + size.x) {
+                all_pixels.push(self.0[y as usize][x as usize])
+            }
+        }
+        let mut max_occurrence = 0;
+        let mut most_occurred_color: Color = Color::ZERO;
+        for i in 0..all_pixels.len() {
+            let mut count = 0;
+            let pix = all_pixels[i];
+            for j in i..all_pixels.len() {
+                if pix == all_pixels[j] {
+                    count += 1;
+                }
+            }
+            if count > max_occurrence {
+                max_occurrence = count;
+                most_occurred_color = pix.clone();
+            }
+        }
+        return most_occurred_color;
     }
     pub fn save<P: AsRef<Path>>(&self, path: P) -> anyhow::Result<()> {
         let mut img = RgbaImage::new(self.width() as u32, self.height() as u32);

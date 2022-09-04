@@ -58,7 +58,7 @@ fn parse_ai_string(
         "Grid" => Box::new(ai::GridAI { rows: 4, cols: 4 }),
         "Cross" => Box::new(ai::CrossAI { size: 3 }),
         "DP" => Box::new(ai::DpAI::new(opt.dp_divide_num, opt.dp_color_num)),
-        "ChangeColor" => Box::new(ai::ChangeColorAI {}),
+        "ChangeColor" => Box::new(ai::ChangeColorAI { thresh: 0.1 }),
         x => bail!("'{x}' is not a HeadAI"),
     };
     let mut chained_ais = vec![];
