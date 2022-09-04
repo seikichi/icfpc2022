@@ -32,14 +32,15 @@ export interface Solution {
 // .env に書け
 const region = "ap-northeast-1";
 const TableName = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
-const client = new DynamoDBClient({
-  region,
-  // 指定しなくても動きそう？
-  // credentials: {
-  //   accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-  //   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  // },
-});
+const credentials =
+  process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+    ? {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      }
+    : undefined;
+
+const client = new DynamoDBClient({ region, credentials });
 
 export async function fetchSolutionList(id: string): Promise<Solution[]> {
   const { Items: items } = await client.send(
