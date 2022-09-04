@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashSet, fmt::Display};
 
 use glam::{IVec2, Vec4};
 
@@ -189,5 +189,23 @@ impl Program {
     #[allow(dead_code)]
     pub fn len(&self) -> usize {
         return self.0.len();
+    }
+    pub fn remove_redundant_color_move(&mut self) {
+        let mut colored = HashSet::<BlockId>::new();
+        let mut ret = vec![];
+        for mv in self.0.iter().rev() {
+            match mv {
+                Move::Color { block_id, .. } => {
+                    if colored.contains(block_id) {
+                        continue;
+                    }
+                    colored.insert(block_id.clone());
+                }
+                _ => {}
+            }
+            ret.push(mv.clone());
+        }
+        ret.reverse();
+        self.0 = ret;
     }
 }

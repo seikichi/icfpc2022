@@ -49,7 +49,7 @@ impl ai::ChainedAI for RefineAi {
             if prev_program.0.len() == 0 {
                 break;
             }
-            let (candidate_program, t) =
+            let (candidate_program, description) =
                 match self.make_neighbor(&prev_program, image, initial_state, &mut rng) {
                     Some(x) => x,
                     None => continue,
@@ -75,10 +75,7 @@ impl ai::ChainedAI for RefineAi {
             };
 
             if accept {
-                info!(
-                    "iter: {:3}, score: {:7}, move: {}",
-                    iter, new_score, prev_program.0[t]
-                );
+                info!("iter: {:3}, score: {:7} {}", iter, new_score, description);
                 prev_program = candidate_program;
                 current_score = new_score;
 
@@ -101,18 +98,19 @@ impl RefineAi {
         image: &Image,
         initial_state: &State,
         rng: &mut impl Rng,
-    ) -> Option<(Program, usize)> {
+    ) -> Option<(Program, String)> {
         let mut next_program = prev_program.clone();
         let t = rng.gen_range(0..next_program.0.len());
         let mv = next_program.0[t].clone();
+        let mut description = "nop".to_string();
         match mv {
             // TODO swap color timing
             Move::PCut {
                 ref block_id,
                 point,
             } => {
-                let r = rng.gen_range(0..2);
-                if r == 0 {
+                let r = rng.gen_range(0..8);
+                if r > 0 {
                     // change PCut point
                     let dx = rng.gen_range(-5..=5);
                     let dy = rng.gen_range(-5..=5);
@@ -121,6 +119,7 @@ impl RefineAi {
                         block_id: block_id.clone(),
                         point: npoint,
                     };
+                    description = format!("move PCut dx:{} dy:{} {}", dx, dy, next_program.0[t]);
                 } else if r == 1 {
                     next_program.0.remove(t);
                     if let Some(result) = Self::remove_all_child(&next_program, block_id) {
@@ -134,7 +133,8 @@ impl RefineAi {
                         image,
                         initial_state,
                         rng,
-                    )
+                    );
+                    description = format!("Remove PCut & divide by DpAI");
                 }
             }
             Move::LCut {
@@ -143,8 +143,8 @@ impl RefineAi {
                 line_number,
             } => {
                 // TODO
-                let r = rng.gen_range(0..2);
-                if r == 0 {
+                let r = rng.gen_range(0..8);
+                if r > 0 {
                     // change LCut position
                     let d = rng.gen_range(-5..=5);
                     next_program.0[t] = Move::LCut {
@@ -152,6 +152,7 @@ impl RefineAi {
                         orientation,
                         line_number: line_number + d,
                     };
+                    description = format!("move LCut d:{} {}", d, next_program.0[t]);
                 } else {
                     next_program.0.remove(t);
                     if let Some(result) = Self::remove_all_child(&next_program, block_id) {
@@ -165,12 +166,13 @@ impl RefineAi {
                         image,
                         initial_state,
                         rng,
-                    )
+                    );
+                    description = format!("Remove LCut & divide by DpAI");
                 }
             }
             Move::Color {
                 ref block_id,
-                color: _,
+                color: prev_color,
             } => {
                 let mut state = initial_state.clone();
                 simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
@@ -185,17 +187,21 @@ impl RefineAi {
                     // average
                     image.average(block.p, block.size)
                 };
+                if prev_color == color {
+                    return None;
+                }
                 next_program.0[t] = Move::Color {
                     block_id: block_id.clone(),
                     color,
                 };
+                description = format!("change Color: {}", next_program.0[t]);
             }
             _ => {
                 // Do nothing
                 return None;
             }
         }
-        Some((next_program, t))
+        Some((next_program, description))
     }
 
     fn solve_by_dp_ai_one_block(
@@ -215,6 +221,7 @@ impl RefineAi {
         let mut dp_ai = ai::DpAI::new(d, c);
         let dp_program = dp_ai.solve(image, &temp_state);
         program.0.append(&mut dp_program.0.clone());
+        program.remove_redundant_color_move();
         return program;
     }
 
