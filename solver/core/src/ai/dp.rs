@@ -250,7 +250,7 @@ impl DpAI {
         }
         for i in 0..childs.len() {
             let child = childs[i];
-            block_id.0.push_back(i as u32);
+            block_id.0.push(i as u32);
             self.restore_program(
                 program,
                 child.x,
@@ -260,7 +260,7 @@ impl DpAI {
                 child.color_id,
                 block_id,
             );
-            block_id.0.pop_back();
+            block_id.0.pop();
         }
     }
 

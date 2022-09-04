@@ -149,7 +149,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 let nx = p.x + dx[i];
                 let ny = p.y + dy[i];
                 let mut next_id = block_id.clone();
-                next_id.0.push_back(i as u32);
+                next_id.0.push(i as u32);
                 let next_simple_block = SimpleBlock::new(
                     Point::new(nx, ny),
                     Point::new(nw[i], nh[i]),
@@ -195,7 +195,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 let nx = p.x + dx[i];
                 let ny = p.y + dy[i];
                 let mut next_id = block_id.clone();
-                next_id.0.push_back(i as u32);
+                next_id.0.push(i as u32);
                 let next_simple_block = SimpleBlock::new(
                     Point::new(nx, ny),
                     Point::new(nw[i], nh[i]),

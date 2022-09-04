@@ -33,7 +33,7 @@ impl HeadAI for SwapAI {
             info!("iter_count {iter_count}");
             iter_count += 1;
             updated = false;
-            let mut max_gain = std::i64::MIN;
+            let mut min_cost_delta = std::i64::MAX;
             let mut best_pair = (0, 0);
             for i in 0..blocks.len() {
                 for j in (i + 1)..blocks.len() {
@@ -51,27 +51,26 @@ impl HeadAI for SwapAI {
                         let sim_after =
                             similarity[i][color_origin[j]] + similarity[j][color_origin[i]];
 
-                        let gain = (sim_after - sim_before) - move_cost;
-                        if gain > max_gain {
-                            max_gain = gain;
+                        let cost_delta = sim_after + move_cost - sim_before;
+                        if cost_delta < min_cost_delta {
+                            min_cost_delta = cost_delta;
                             best_pair = (i, j);
                         }
                     }
                 }
-                // swap
-                if max_gain > 0 {
-                    info!("max_gain {max_gain}");
-                    updated = true;
-                    let (i, j) = best_pair;
-                    let swap_move = isl::Move::Swap {
-                        a: blocks[i].0.clone(),
-                        b: blocks[j].0.clone(),
-                    };
-                    color_origin.swap(i, j);
-                    // simulator::simulate(&mut state, &swap_move).unwrap();
-                    program.push(swap_move);
-                }
             }
+            // swap
+            if min_cost_delta < 0 {
+                updated = true;
+                let (i, j) = best_pair;
+                info!("min_cost_delta {min_cost_delta}, {i} {j}");
+                let swap_move = isl::Move::Swap {
+                    a: blocks[i].0.clone(),
+                    b: blocks[j].0.clone(),
+                };
+                color_origin.swap(i, j);
+                program.push(swap_move);
+            }            
         }
         info!("end swap ai");
         isl::Program(program)
