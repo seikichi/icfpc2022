@@ -5,7 +5,7 @@ exports.handler = async function (event, _context) {
   const runId = event.runId;
   const commit = process.env.COMMIT;
 
-  const command = "/code/target/release/icfpc2022";
+  const command = "/code/target/release/lambda";
   const args = [
     "-q",
     "-i",
