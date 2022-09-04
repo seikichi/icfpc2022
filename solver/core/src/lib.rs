@@ -1,7 +1,7 @@
-pub mod isl;
 mod ai;
 mod image;
 mod initial_config;
+pub mod isl;
 mod simulator;
 
 use anyhow::bail;
@@ -63,6 +63,7 @@ fn parse_ai_string(
         "DP" => Box::new(ai::DpAI::new(opt.dp_divide_num, opt.dp_color_num)),
         // "Merge" => Box::new(ai::MergeAI::new()),
         "ChangeColor" => Box::new(ai::ChangeColorAI {}),
+        "Swap" => Box::new(ai::SwapAI {}),
         x => bail!("'{x}' is not a HeadAI"),
     };
     let mut chained_ais = vec![];

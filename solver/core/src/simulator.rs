@@ -269,6 +269,16 @@ pub fn move_cost(state: &State, mv: &Move, w: usize, h: usize) -> Option<i64> {
     };
     Some((base * (w * h) as f32 / area as f32).round() as i64)
 }
+pub fn move_cost_without_state(mv: &Move, target_area: usize, w: usize, h: usize) -> i64 {
+    let base = match mv {
+        Move::PCut { .. } => 10.0,
+        Move::LCut { .. } => 7.0,
+        Move::Color { .. } => 5.0,
+        Move::Swap { .. } => 3.0,
+        Move::Merge { .. } => 1.0,
+    };
+    (base * (w * h) as f32 / target_area as f32).round() as i64
+}
 
 #[allow(dead_code)]
 pub fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
