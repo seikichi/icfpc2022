@@ -1,3 +1,6 @@
+use std::thread::current;
+use std::time::Instant;
+
 use crate::ai;
 use crate::image;
 use crate::image::Image;
@@ -22,31 +25,63 @@ impl ai::ChainedAI for RefineAi {
     ) -> Program {
         // TODO seed_from_u64
         let mut rng = rand::thread_rng();
-        let mut best_program = initial_program.clone();
-        let mut best_score = simulator::calc_score(initial_program, image, initial_state).unwrap();
+
         let mut prev_program = initial_program.clone();
+        let mut current_score =
+            simulator::calc_score(initial_program, image, initial_state).unwrap();
+
+        let mut best_program = initial_program.clone();
+        let mut best_score = current_score;
+
+        let initial_temperature = 100.0;
+        let mut temperature;
+
         for iter in 0..self.n_iters {
+            // tweak temperature
+            let progress = (iter as f64) / (self.n_iters as f64);
+            temperature = initial_temperature * (1.0 - progress) * (-progress).exp2();
+
             if prev_program.0.len() == 0 {
                 break;
             }
-            let (next_program, t) =
+            let (candidate_program, t) =
                 match self.make_neighbor(&prev_program, image, initial_state, &mut rng) {
                     Some(x) => x,
                     None => continue,
                 };
-            if let Ok(score) = calc_score(&next_program, image, &initial_state) {
-                if score < best_score {
-                    info!(
-                        "iter: {:3}, score: {:7}, move: {}",
-                        iter, score, prev_program.0[t]
-                    );
-                    best_score = score;
-                    best_program = next_program.clone();
-                    prev_program = next_program;
+            let new_score = match calc_score(&candidate_program, image, &initial_state) {
+                Ok(s) => s,
+                Err(_) => continue,
+            };
+
+            // 新しい解を受理するか決める
+            let accept = {
+                if new_score < current_score {
+                    true
+                } else {
+                    // new_score >= current_score
+                    let delta = (new_score - current_score) as f64;
+                    let accept_prob = (-delta / temperature).exp();
+                    rng.gen::<f64>() < accept_prob
+                }
+            };
+
+            if accept {
+                info!(
+                    "iter: {:3}, score: {:7}, move: {}",
+                    iter, new_score, prev_program.0[t]
+                );
+                prev_program = candidate_program;
+                current_score = new_score;
+
+                if new_score < best_score {
+                    best_score = new_score;
+                    best_program = prev_program.clone();
                 }
             }
         }
-        return best_program;
+
+        best_program
     }
 }
 
