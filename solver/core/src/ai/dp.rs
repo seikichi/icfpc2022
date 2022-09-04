@@ -33,8 +33,8 @@ pub struct DpAI {
     rng: ThreadRng,
     sample_color_num: usize,
     sampled_color: Vec<Color>,
-    // memo[x][y][w][h][color_id]
-    memo: Vec<Vec<Vec<Vec<Vec<Option<(i64, Program, Vec<Child>)>>>>>>,
+    // memo[x][y][w][h][color_id] -> (score, Some(今のブロックに対するProgram, 復元用の次の最適解))
+    memo: Vec<Vec<Vec<Vec<Vec<(i64, Option<(Program, Vec<Child>)>)>>>>>,
     similality_memo: Vec<Vec<Vec<Option<i64>>>>,
     image: image::Image,
     initial_state: State,
@@ -72,7 +72,10 @@ impl DpAI {
     pub fn new(divide_num: usize, sample_color_num: usize) -> Self {
         let memo = vec![
             vec![
-                vec![vec![vec![None; sample_color_num]; divide_num + 1]; divide_num + 1];
+                vec![
+                    vec![vec![(1 << 30, None); sample_color_num]; divide_num + 1];
+                    divide_num + 1
+                ];
                 divide_num
             ];
             divide_num
@@ -92,8 +95,8 @@ impl DpAI {
         let d = self.memo.len();
         assert!(x + w <= d);
         assert!(y + h <= d);
-        if let Some(ret) = self.memo[x][y][w][h][color_id].clone() {
-            return ret.0;
+        if self.memo[x][y][w][h][color_id].1.is_some() {
+            return self.memo[x][y][w][h][color_id].0;
         }
         let state = self.make_state(x, y, w, h, color_id);
         let mut ret = (
@@ -230,13 +233,13 @@ impl DpAI {
                 nprogram.0.pop().unwrap();
             }
         }
-        let score = ret.0;
-        self.memo[x][y][w][h][color_id] = Some(ret);
+        self.memo[x][y][w][h][color_id].0 = ret.0;
+        self.memo[x][y][w][h][color_id].1 = Some((ret.1, ret.2));
         // println!(
         //     "{} {} {} {} {} {} {:?} {}",
         //     x, y, w, h, color_id, ret.0, state, ret.1
         // );
-        return score;
+        return ret.0;
     }
 
     // calcでProgramを返すとコピーが二乗行われるので後から復元する
@@ -250,7 +253,7 @@ impl DpAI {
         color_id: usize,
         block_id: &mut BlockId,
     ) {
-        let (_score, mut lprogram, childs) = self.memo[x][y][w][h][color_id].clone().unwrap();
+        let (mut lprogram, childs) = self.memo[x][y][w][h][color_id].1.clone().unwrap();
         for mv in lprogram.0.iter_mut() {
             mv.convert_block_id(&block_id);
             program.0.push(mv.clone());
