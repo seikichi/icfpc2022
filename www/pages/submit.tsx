@@ -10,13 +10,8 @@ import { FieldValues, useForm, UseFormSetError } from "react-hook-form";
 import { z } from "zod";
 import { useCallback } from "react";
 import { useRouter } from "next/router";
-
-const schema = z.object({
-  args: z.string(),
-  target: z.string(),
-});
-
-type Schema = z.infer<typeof schema>;
+import { schema, Schema } from "../lib/schema/run";
+import { SubmitResult } from "./api/runs";
 
 const Page: NextPage<{}> = ({}) => {
   const {
@@ -36,11 +31,27 @@ const Page: NextPage<{}> = ({}) => {
   const hasError = Object.keys(errors).length > 0;
 
   const handle = useCallback(
-    (data: Schema) => {
+    async (data: Schema) => {
       console.log(data);
-      router.push({ pathname: "/" });
+      try {
+        const res = await fetch("/api/runs", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(data),
+        });
+        const result: SubmitResult = await res.json();
+        if (!result.success) {
+          setError("api", { message: result.message });
+          return;
+        }
+        router.push({ pathname: "/" });
+      } catch (e) {
+        setError("api", { message: "登録に失敗しました" });
+      }
     },
-    [router]
+    [router, setError]
   );
 
   const argsHelper = (errors.args?.message as any) || "-a DP,Refine とか書く";
@@ -82,7 +93,7 @@ const Page: NextPage<{}> = ({}) => {
 
       {hasError && (
         <Alert sx={{ width: "100%" }} severity="error">
-          入力内容が間違ってるよ
+          {(errors.api?.message as any) || "入力内容に誤りがあります"}
         </Alert>
       )}
 

@@ -1,9 +1,16 @@
-import { DynamoDBClient, QueryCommand } from "@aws-sdk/client-dynamodb";
+import {
+  DynamoDBClient,
+  PutItemCommand,
+  QueryCommand,
+} from "@aws-sdk/client-dynamodb";
+
+import { LambdaClient, InvokeCommand } from "@aws-sdk/client-lambda";
 
 export interface Run {
   id: string;
   time: number;
   args: string;
+  target: string;
   problems: number;
   score: number;
 }
@@ -13,6 +20,7 @@ export interface RunResult {
   time: number;
   args: string;
   score: number;
+  target: string;
 
   results: {
     commit: string;
@@ -32,6 +40,7 @@ export interface Solution {
 // .env に書け
 const region = "ap-northeast-1";
 const TableName = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
+const FunctionName = "InfraStack-Solver4A42070C-PVa1uZZEnKmR";
 const credentials =
   process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
     ? {
@@ -41,6 +50,66 @@ const credentials =
     : undefined;
 
 const client = new DynamoDBClient({ region, credentials });
+const lambda = new LambdaClient({ region, credentials });
+
+export async function putRun(params: {
+  uuid: string;
+  args: string;
+  target: string;
+}) {
+  const { uuid, args, target } = params;
+
+  // 問題IDパース
+  const ids: Set<number> = new Set([]);
+  for (const ps of target.split(",")) {
+    if (ps.includes("-")) {
+      const [fromS, toS] = ps.split("-");
+      const [from, to] = [parseInt(fromS, 10), parseInt(toS, 10)];
+      for (let i = from; i <= to; i++) {
+        ids.add(i);
+      }
+    } else {
+      ids.add(parseInt(ps, 10));
+    }
+  }
+
+  // Run 追加
+  const pk = `R#${uuid}`;
+  const time = Math.floor(new Date().getTime() / 1000);
+  await client.send(
+    new PutItemCommand({
+      TableName,
+      Item: {
+        PK: { S: pk },
+        SK: { S: pk },
+        Args: { S: args },
+        Target: { S: target },
+        GSI1PK: { S: "R.Time" },
+        GSI1SK: { N: `${time}` },
+      },
+    })
+  );
+
+  // Lambda 実行
+  await Promise.all(
+    Array.from(ids).map((problemId) => {
+      const payload = JSON.stringify({
+        problemId: `${problemId}`,
+        args,
+        runId: uuid,
+      });
+      return lambda.send(
+        new InvokeCommand({
+          FunctionName,
+          InvocationType: "Event",
+          Payload: Buffer.from(payload),
+        })
+      );
+    })
+  );
+
+  return;
+}
 
 export async function fetchSolutionList(id: string): Promise<Solution[]> {
   const { Items: items } = await client.send(
@@ -94,6 +163,7 @@ export async function fetchRun(id: string): Promise<RunResult> {
     time: 0,
     args: "",
     score: 0,
+    target: "",
     results: [],
   };
 
@@ -103,6 +173,7 @@ export async function fetchRun(id: string): Promise<RunResult> {
     if (sk.startsWith("R")) {
       result.time = parseInt(item["GSI1SK"]["N"]!);
       result.args = item["Args"]["S"]!;
+      result.target = item["Target"]["S"]!;
     }
 
     if (sk.startsWith("S")) {
@@ -150,6 +221,7 @@ export async function fetchRunList(): Promise<Run[]> {
       id: item["PK"]["S"]?.split("#")[1]!,
       time: parseInt(item["GSI1SK"]["N"]!, 10),
       args: item["Args"]["S"]!,
+      target: item["Target"]["S"]!,
       problems,
       score,
     });

@@ -10,15 +10,18 @@
   },
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.163.0",
+    "@aws-sdk/client-lambda": "^3.163.0",
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
     "@hookform/resolvers": "^2.9.7",
     "@mui/icons-material": "^5.10.3",
     "@mui/material": "^5.10.3",
+    "@types/uuid": "^8.3.4",
     "next": "12.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-hook-form": "^7.34.2",
+    "uuid": "^8.3.2",
     "zod": "^3.18.0"
   },
   "devDependencies": {
