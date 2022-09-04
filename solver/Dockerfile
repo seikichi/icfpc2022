@@ -15,5 +15,6 @@ RUN cargo build --release
 
 COPY problems /code/problems
 COPY lambda.js ${LAMBDA_TASK_ROOT}
+RUN npm intall @aws-sdk/client-dynamodb
 
 CMD ["lambda.handler"]

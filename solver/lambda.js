@@ -31,6 +31,48 @@ exports.handler = async function (event, _context) {
     });
     console.log("stdout:", result.stdout);
     console.log("stderr:", result.stderr);
+
+    if (result.error) {
+      // Rust と JS どっちからも DynamoDB 書いてて厳しい...
+      const {
+        DynamoDBClient,
+        PutItemCommand,
+        UpdateItemCommand,
+      } = require("@aws-sdk/client-dynamodb");
+
+      const pk = `R${runId}`;
+      const sk = `S#${runId}`;
+      const region = "ap-northeast-1";
+      const TableName = "InfraStack-TableCD117FA1-1NAQ40LMS0E1G";
+      const client = new DynamoDBClient({ region });
+
+      await client.send(
+        new PutItemCommand({
+          TableName,
+          Item: {
+            PK: { S: pk },
+            SK: { S: sk },
+            Error: { S: result.stderr },
+          },
+        })
+      );
+      await client.send(
+        new UpdateItemCommand({
+          TableName,
+          Key: {
+            PK: { S: pk },
+            SK: { S: pk },
+          },
+          UpdateExpression: "set #key = :v",
+          ExpressionAttributeNames: {
+            "#key": `E#${problemId}`,
+          },
+          ExpressionAttributeValues: {
+            ":v": { N: "0" },
+          },
+        })
+      );
+    }
   } catch (e) {
     console.log("error:", e);
   }
