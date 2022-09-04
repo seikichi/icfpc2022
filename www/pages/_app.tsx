@@ -7,25 +7,40 @@ import Container from "@mui/material/Container";
 import Toolbar from "@mui/material/Toolbar";
 import Typography from "@mui/material/Typography";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import Link from "next/link";
 import CssBaseline from "@mui/material/CssBaseline";
+import Box from "@mui/material/Box";
+import Button from "@mui/material/Button";
+import Link from "next/link";
 
 const theme = createTheme({});
 
 function Header() {
-  // NOTE: cursor: "pointer" が無いとマウスカーソルが変わらない...
   return (
     <AppBar position="static">
       <Toolbar>
-        <Link href="/" passHref>
-          <Typography
-            component="div"
-            variant="h6"
-            sx={{ flexGrow: 1, cursor: "pointer" }}
-          >
-            めん処譽紫
-          </Typography>
-        </Link>
+        <Typography component="div" variant="h6" sx={{ mx: 2 }}>
+          めん処譽紫
+        </Typography>
+
+        <Box sx={{ flexGrow: 1, display: { md: "flex" } }}>
+          <Link href="/" passHref>
+            <Button sx={{ my: 2, color: "white", display: "block" }}>
+              実行履歴
+            </Button>
+          </Link>
+
+          <Link href="/problems" passHref>
+            <Button sx={{ my: 2, color: "white", display: "block" }}>
+              問題一覧
+            </Button>
+          </Link>
+
+          <Link href="/submit" passHref>
+            <Button sx={{ my: 2, color: "white", display: "block" }}>
+              ソルバー実行
+            </Button>
+          </Link>
+        </Box>
       </Toolbar>
     </AppBar>
   );

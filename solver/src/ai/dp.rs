@@ -17,16 +17,19 @@ pub struct DpAI {
     memo: Vec<Vec<Vec<Vec<Vec<Option<(i64, Program)>>>>>>,
     similality_memo: Vec<Vec<Vec<Option<i64>>>>,
     image: image::Image,
+    initial_state: State,
 }
 
 impl HeadAI for DpAI {
     fn solve(&mut self, image: &image::Image, initial_state: &simulator::State) -> Program {
         let mut ret = Program(vec![]);
-        let mut initial_block_id = 0;
+        let mut initial_block_id = initial_state.blocks.keys().next().unwrap().clone();
+        self.initial_state = initial_state.clone();
         if initial_state.blocks.len() != 1 {
             let mut merge_ai = MergeAI::new();
             ret = merge_ai.solve(image, initial_state);
             initial_block_id = merge_ai.merged_block_id();
+            simulator::simulate_all(&ret, &self.initial_state).unwrap();
         }
         // color sampling
         self.image = image.clone();
@@ -38,7 +41,7 @@ impl HeadAI for DpAI {
         let d = self.memo.len();
         let (_score, program) = self.calc(0, 0, d, d, 0);
         let mut result = self.renumber_block_id(&mut vec![program]);
-        result.convert_initial_block_id(initial_block_id);
+        result.convert_initial_block_id(&initial_block_id);
         // println!("{}", result);
         ret.0.append(&mut result.0);
         return ret;
@@ -61,6 +64,7 @@ impl DpAI {
             memo,
             similality_memo,
             image: image::Image::new(1, 1),
+            initial_state: State::initial_state(0, 0),
         }
     }
     fn calc(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> (i64, Program) {

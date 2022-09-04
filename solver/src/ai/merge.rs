@@ -41,7 +41,7 @@ impl HeadAI for MergeAI {
             }
         }
         ret.0.push(Move::Color {
-            block_id: BlockId::new(&vec![self.merged_block_id()]),
+            block_id: self.merged_block_id(),
             color: Color::ONE,
         });
         return ret;
@@ -66,8 +66,16 @@ impl MergeAI {
     }
     // 最終的に全部まとめ終わった時のblock_id
     #[allow(dead_code)]
-    pub fn merged_block_id(&self) -> u32 {
+    pub fn merged_block_id(&self) -> BlockId {
         assert!(self.active_block_num() == 1);
-        return self.state.next_global_id - 1;
+        return self
+            .state
+            .blocks
+            .iter()
+            .filter(|(_, value)| value.active)
+            .next()
+            .unwrap()
+            .0
+            .clone();
     }
 }
