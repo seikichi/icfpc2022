@@ -49,11 +49,12 @@ const Page: NextPage<Props> = ({ id, solutions }) => {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>ランク</TableCell>
+              <TableCell>#</TableCell>
               <TableCell>スコア</TableCell>
               <TableCell>AI</TableCell>
               <TableCell>実行ID</TableCell>
               <TableCell>出力</TableCell>
+              <TableCell>ISL</TableCell>
               <TableCell>コミット</TableCell>
             </TableRow>
           </TableHead>
@@ -61,6 +62,7 @@ const Page: NextPage<Props> = ({ id, solutions }) => {
             {solutions.map((s, i) => {
               const url = `https://github.com/seikichi/icfpc2022/commit/${s.commit}`;
               const output = `https://d30a5x02adw8tj.cloudfront.net/${s.runId}/${s.problemId}.png`;
+              const isl = `https://d30a5x02adw8tj.cloudfront.net/${s.runId}/${s.problemId}.isl`;
               return (
                 <TableRow key={i}>
                   <TableCell>{i + 1}</TableCell>
@@ -72,7 +74,17 @@ const Page: NextPage<Props> = ({ id, solutions }) => {
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <img src={output} width="80" alt="output" />
+                    <img
+                      style={{ border: "1px solid black" }}
+                      src={output}
+                      width="80"
+                      alt="output"
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Link href={isl} passHref>
+                      <MuiLink target="_blank">{s.problemId}.isl</MuiLink>
+                    </Link>
                   </TableCell>
                   <TableCell>
                     <Link href={url} passHref>

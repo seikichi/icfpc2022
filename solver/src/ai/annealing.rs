@@ -7,6 +7,8 @@ use crate::{
     simulator::{calc_score, simulate_all, ProgramExecError, State},
 };
 use glam::IVec2;
+use log::debug;
+use log::info;
 use rand::prelude::*;
 
 pub struct AnnealingAI {
@@ -14,10 +16,17 @@ pub struct AnnealingAI {
 }
 
 impl ChainedAI for AnnealingAI {
-    fn solve(&mut self, image: &Image, initial_state: &State, initial_program: &Program) -> Program {
+    fn solve(
+        &mut self,
+        image: &Image,
+        initial_state: &State,
+        initial_program: &Program,
+    ) -> Program {
         let mut solution = initial_program.clone();
         let mut rng = SmallRng::from_entropy();
-        let mut current_score = self.calc_ann_score(&solution, image, initial_state).unwrap();
+        let mut current_score = self
+            .calc_ann_score(&solution, image, initial_state)
+            .unwrap();
         let start_at = Instant::now();
 
         let mut best_solution = solution.clone();
@@ -33,7 +42,7 @@ impl ChainedAI for AnnealingAI {
             if iter % 100 == 0 {
                 let elapsed = Instant::now() - start_at;
                 if elapsed >= self.time_limit {
-                    eprintln!("iter = {}", iter);
+                    info!("iter = {}", iter);
                     return best_solution;
                 }
 
@@ -86,7 +95,7 @@ impl ChainedAI for AnnealingAI {
                         // 動かせない
                         continue;
                     }
-                    eprintln!(
+                    debug!(
                         "LCut {} {}: {} -> {}",
                         block_id,
                         orientation,
@@ -126,7 +135,7 @@ impl ChainedAI for AnnealingAI {
                         // 動かせない
                         continue;
                     }
-                    eprintln!("PCut {}: {} -> {}", block_id, point, next.unwrap());
+                    debug!("PCut {}: {} -> {}", block_id, point, next.unwrap());
                     Move::PCut {
                         block_id: block_id.clone(),
                         point: next.unwrap(),
@@ -139,12 +148,12 @@ impl ChainedAI for AnnealingAI {
             let new_score = match self.calc_ann_score(&mut solution, image, initial_state) {
                 Ok(x) => x,
                 Err(_) => {
-                    eprintln!("failed to move.. rollback.");
+                    debug!("failed to move.. rollback.");
                     solution.0[i_chosen] = old;
                     continue;
                 }
             };
-            eprintln!("new_score = {new_score}");
+            info!("new_score = {new_score}");
 
             // 新しい解を受理するか決める
             let accept = {
@@ -173,7 +182,12 @@ impl ChainedAI for AnnealingAI {
     }
 }
 impl AnnealingAI {
-    fn calc_ann_score(&self, program: &Program, image: &Image, state: &State) -> Result<f64, ProgramExecError> {
+    fn calc_ann_score(
+        &self,
+        program: &Program,
+        image: &Image,
+        state: &State,
+    ) -> Result<f64, ProgramExecError> {
         Ok(calc_score(program, image, state)? as f64)
     }
 }

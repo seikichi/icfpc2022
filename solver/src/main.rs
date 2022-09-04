@@ -6,6 +6,7 @@ mod isl;
 mod simulator;
 
 use anyhow::bail;
+use log::info;
 use std::env;
 use std::fs;
 use std::path::PathBuf;
@@ -46,6 +47,9 @@ struct Opt {
 
     #[structopt(long = "dp-color-num", default_value = "10")]
     dp_color_num: usize,
+
+    #[structopt(short = "q", help = "disable debug log")]
+    quiet: bool,
 }
 
 fn parse_ai_string(
@@ -59,7 +63,7 @@ fn parse_ai_string(
         "Cross" => Box::new(ai::CrossAI { size: 3 }),
         "DP" => Box::new(ai::DpAI::new(opt.dp_divide_num, opt.dp_color_num)),
         // "Merge" => Box::new(ai::MergeAI::new()),
-        "ChangeColor" => Box::new(ai::ChangeColorAI { thresh: 0.1 }),
+        "ChangeColor" => Box::new(ai::ChangeColorAI {}),
         x => bail!("'{x}' is not a HeadAI"),
     };
     let mut chained_ais = vec![];
@@ -81,6 +85,10 @@ fn parse_ai_string(
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let opt = Opt::from_args();
+
+    // init logger
+    let loglevel = if opt.quiet { "info" } else { "debug" };
+    env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(loglevel)).init();
 
     let (mut head_ai, chained_ais) = parse_ai_string(&opt.ai, &opt)?;
 
@@ -118,9 +126,9 @@ async fn main() -> anyhow::Result<()> {
         score_history.push(simulator::calc_score(&program, &img, &initial_state)?);
     }
 
-    println!("Score History:");
+    info!("Score History:");
     for (i, score) in score_history.iter().enumerate() {
-        println!("    {i}: {score}")
+        info!("    {i}: {score}")
     }
 
     let score = simulator::calc_score(&program, &img, &initial_state)?;
@@ -128,11 +136,11 @@ async fn main() -> anyhow::Result<()> {
     let output_image = simulator::rasterize_state(&state, img.width(), img.height());
 
     let output_filename = opt.output_dir.join(problem_id.clone() + ".isl");
-    println!("output ISL to: {}", output_filename.to_string_lossy());
+    info!("output ISL to: {}", output_filename.to_string_lossy());
     fs::write(output_filename, format!("{program}"))?;
 
     let output_image_filename = opt.output_dir.join(problem_id.clone() + ".png");
-    println!("output PNG to: {}", output_image_filename.to_string_lossy());
+    info!("output PNG to: {}", output_image_filename.to_string_lossy());
     output_image.save(output_image_filename.clone())?;
 
     if let Some(run_id) = opt.run_id {

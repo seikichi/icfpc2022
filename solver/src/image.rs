@@ -32,7 +32,7 @@ impl Image {
         return sum / (size.y * size.x) as f32;
     }
     #[allow(dead_code)]
-    pub fn most_occurred(&self, p: isl::Point, size: isl::Point) -> Color {
+    pub fn majority(&self, p: isl::Point, size: isl::Point) -> Color {
         // TODO: 高速化（release buildだとまだ早い）
         let mut all_pixels = vec![];
         for y in p.y..(p.y + size.y) {
