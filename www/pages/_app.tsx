@@ -15,7 +15,8 @@ import Link from "next/link";
 const theme = createTheme({
   palette: {
     primary: {
-      main: "#d71345",
+      // http://chotyoshi9.sakura.ne.jp/index.html
+      main: "#800000",
     },
   },
 });
