@@ -21,6 +21,7 @@ pub struct RefineAi {
     pub n_iters: usize,
     pub algorithm: OptimizeAlgorithm,
     pub initial_temperature: f64,
+    pub dp_divide_max: usize,
 }
 
 impl ai::ChainedAI for RefineAi {
@@ -244,7 +245,7 @@ impl RefineAi {
         let mut program = program;
         let mut state = initial_state.clone();
         let end_state = simulator::simulate_all(&program, &mut state).unwrap();
-        let d = rng.gen_range(2..=6);
+        let d = rng.gen_range(4..=self.dp_divide_max);
         let c = rng.gen_range(3..=8);
         let temp_state = end_state.block_state(block_id.clone(), initial_state.cost_coeff_version);
         let mut dp_ai = ai::DpAI::new(d, c);
