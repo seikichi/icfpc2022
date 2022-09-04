@@ -44,8 +44,12 @@ impl HeadAI for SwapAI {
                             a: bid_i.clone(),
                             b: bid_j.clone(),
                         };
-                        let move_cost =
-                            simulator::move_cost_without_state(&swap_move, b_i.area() as usize, image.width(), image.height());
+                        let move_cost = simulator::move_cost_without_state(
+                            &swap_move,
+                            b_i.area() as usize,
+                            image.width(),
+                            image.height(),
+                        );
                         let sim_before =
                             similarity[i][color_origin[i]] + similarity[j][color_origin[j]];
                         let sim_after =
@@ -70,7 +74,7 @@ impl HeadAI for SwapAI {
                 };
                 color_origin.swap(i, j);
                 program.push(swap_move);
-            }            
+            }
         }
         info!("end swap ai");
         isl::Program(program)
