@@ -219,7 +219,11 @@ impl RefineAi {
                     block_id: block_id.clone(),
                     color,
                 };
-                description = format!("change Color: {}", next_program.0[t]);
+                description = format!(
+                    "change Color: {} -> {}",
+                    prev_color * 255.0,
+                    next_program.0[t]
+                );
             }
             _ => {
                 // Do nothing
