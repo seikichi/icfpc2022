@@ -17,7 +17,7 @@ impl HeadAI for MergeAI {
             let blocks = self.state.blocks.clone();
             let mut blocks = blocks
                 .iter()
-                .filter(|(_key, value)| value.active)
+                .filter(|(_key, value)| value.state.is_active())
                 .map(|(key, value)| (key, value))
                 .collect::<Vec<_>>();
             blocks.sort_by(|a, b| a.1.p.x.cmp(&b.1.p.x).then(a.1.p.y.cmp(&b.1.p.y)));
@@ -58,7 +58,7 @@ impl MergeAI {
     fn active_block_num(&self) -> u32 {
         let mut ret = 0;
         for block in self.state.blocks.values() {
-            if block.active {
+            if block.state.is_active() {
                 ret += 1;
             }
         }
@@ -72,7 +72,7 @@ impl MergeAI {
             .state
             .blocks
             .iter()
-            .filter(|(_, value)| value.active)
+            .filter(|(_, value)| value.state.is_active())
             .next()
             .unwrap()
             .0
