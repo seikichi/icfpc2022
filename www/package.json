@@ -12,6 +12,8 @@
     "@aws-sdk/client-dynamodb": "^3.163.0",
     "@emotion/react": "^11.10.4",
     "@emotion/styled": "^11.10.4",
+    "@hookform/resolvers": "^2.9.7",
+    "@mui/icons-material": "^5.10.3",
     "@mui/material": "^5.10.3",
     "next": "12.2.5",
     "react": "18.2.0",
