@@ -25,7 +25,6 @@ interface Props {
 }
 
 const Home: NextPage<Props> = ({ runs }) => {
-  console.log(runs);
   return (
     <Stack spacing={2}>
       <Typography component="h1" variant="h5">

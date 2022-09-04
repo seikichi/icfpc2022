@@ -30,9 +30,9 @@ impl HeadAI for DpAI {
         }
         // color sampling
         self.image = image.clone();
-        self.sampled_color.push(Color::ONE);
         self.sampled_color =
-            image::k_means_color_sampling(image, self.sample_color_num, 50, &mut self.rng);
+            image::k_means_color_sampling(image, self.sample_color_num - 1, 20, &mut self.rng);
+        self.sampled_color.push(Color::ONE);
 
         // dp
         let d = self.memo.len();
