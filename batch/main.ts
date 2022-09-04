@@ -59,6 +59,23 @@ const MAX_PROBLEM_ID = 40;
       body: form,
     });
 
-    console.log(await res.text());
+    const { submission_id: submissionId } = await res.json();
+    for (let i = 0; i < Infinity; i++) {
+      const res = await fetch(
+        `https://robovinci.xyz/api/submissions/${submissionId}`,
+        {
+          headers: { Authorization: `Bearer ${TOKEN}` },
+        }
+      );
+      const { status, cost } = await res.json();
+      if (status === "PROCESSING" || status === "QUEUED") {
+        await new Promise((r) => setTimeout(r, 1000 * i));
+        continue;
+      }
+      if (cost !== score) {
+        console.log(`WRONG SCORE: expect ${score}, but ${cost} given`);
+      }
+      break;
+    }
   }
 })();
