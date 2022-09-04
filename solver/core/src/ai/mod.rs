@@ -6,6 +6,7 @@ mod grid;
 mod merge;
 mod onecolor;
 mod refine;
+mod swap;
 
 pub use annealing::*;
 pub use changecolor::*;
@@ -15,6 +16,7 @@ pub use grid::*;
 pub use merge::*;
 pub use onecolor::*;
 pub use refine::*;
+pub use swap::*;
 
 use crate::image;
 use crate::isl;
