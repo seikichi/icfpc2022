@@ -5,6 +5,7 @@ use crate::simulator;
 use crate::simulator::calc_score;
 use crate::simulator::simulate_partial;
 use crate::simulator::State;
+use log::info;
 use rand::Rng;
 
 pub struct RefineAi {
@@ -108,7 +109,7 @@ impl ai::ChainedAI for RefineAi {
             }
             if let Ok(score) = calc_score(&next_program, image, &initial_state) {
                 if score < best_score {
-                    println!(
+                    info!(
                         "iter: {:3}, score: {:7}, move: {}",
                         iter, score, prev_program.0[t]
                     );
