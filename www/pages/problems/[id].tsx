@@ -36,15 +36,33 @@ export const getServerSideProps: GetServerSideProps<Props> = async (
 
 const Page: NextPage<Props> = ({ id, solutions }) => {
   const input = `https://cdn.robovinci.xyz/imageframes/${id}.png`;
+  const initial = `https://cdn.robovinci.xyz/imageframes/${id}.initial.png`;
 
   return (
     <Stack spacing={2}>
       <Typography component="h1" variant="h5">
         Problem {id}
       </Typography>
-
-      <img src={input} width="200" alt="problem" />
-
+      <>
+        {parseInt(id, 10) > 25 && (
+          <img
+            style={{
+              display: "inline",
+              border: "1px solid black",
+              marginRight: "5px",
+            }}
+            src={initial}
+            width="200"
+            alt="initial"
+          />
+        )}
+        <img
+          src={input}
+          width="200"
+          alt="problem"
+          style={{ border: "1px solid black", display: "inline" }}
+        />
+      </>
       <TableContainer>
         <Table>
           <TableHead>
