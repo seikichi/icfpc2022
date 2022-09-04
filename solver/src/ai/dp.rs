@@ -9,13 +9,32 @@ use crate::simulator::State;
 use rand::rngs::ThreadRng;
 
 use super::MergeAI;
+#[derive(Debug, Clone, Copy)]
+struct Child {
+    x: usize,
+    y: usize,
+    w: usize,
+    h: usize,
+    color_id: usize,
+}
+impl Child {
+    fn new(x: usize, y: usize, w: usize, h: usize, color_id: usize) -> Self {
+        Child {
+            x,
+            y,
+            w,
+            h,
+            color_id,
+        }
+    }
+}
 
 pub struct DpAI {
     rng: ThreadRng,
     sample_color_num: usize,
     sampled_color: Vec<Color>,
     // memo[x][y][w][h][color_id]
-    memo: Vec<Vec<Vec<Vec<Vec<Option<(i64, Program)>>>>>>,
+    memo: Vec<Vec<Vec<Vec<Vec<Option<(i64, Program, Vec<Child>)>>>>>>,
     similality_memo: Vec<Vec<Vec<Option<i64>>>>,
     image: image::Image,
     initial_state: State,
@@ -36,15 +55,16 @@ impl HeadAI for DpAI {
         self.image = image.clone();
         self.sampled_color =
             image::k_means_color_sampling(image, self.sample_color_num - 1, 20, &mut self.rng);
-        self.sampled_color.push(Color::ONE);
+        self.sampled_color.push(Color::ONE); // TODO blockの色にする
+        self.sampled_color.reverse();
 
         // dp
         let d = self.memo.len();
-        let (_score, program) = self.calc(0, 0, d, d, 0);
-        let mut result = self.renumber_block_id(&mut vec![program]);
-        result.convert_initial_block_id(&initial_block_id);
-        // println!("{}", result);
-        ret.0.append(&mut result.0);
+        let _score = self.calc(0, 0, d, d, 0);
+        let mut program = Program(vec![]);
+        self.restore_program(&mut program, 0, 0, d, d, 0, &mut initial_block_id);
+
+        ret.0.append(&mut program.0);
         return ret;
     }
 }
@@ -68,15 +88,19 @@ impl DpAI {
             initial_state: State::initial_state(0, 0),
         }
     }
-    fn calc(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> (i64, Program) {
+    fn calc(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i64 {
         let d = self.memo.len();
         assert!(x + w <= d);
         assert!(y + h <= d);
         if let Some(ret) = self.memo[x][y][w][h][color_id].clone() {
-            return ret;
+            return ret.0;
         }
         let state = self.make_state(x, y, w, h, color_id);
-        let mut ret = (self.calc_similality(x, y, w, h, color_id), Program(vec![]));
+        let mut ret = (
+            self.calc_similality(x, y, w, h, color_id),
+            Program(vec![]),
+            vec![],
+        );
         for c in 0..self.sampled_color.len() {
             let mut nprogram = Program(vec![]);
             let mut ncost = 0;
@@ -100,6 +124,7 @@ impl DpAI {
                     assert!(nprogram.0.len() == 1);
                     ret.0 = ncost + scost;
                     ret.1 = nprogram.clone();
+                    ret.2 = vec![];
                 }
             }
             // PCut
@@ -118,23 +143,21 @@ impl DpAI {
                         self.image.height(),
                     )
                     .unwrap();
-                    let mut nlprogram = vec![];
+                    let mut nlchilds = vec![];
                     for i in 0..4 {
                         let nx = x + dx[i];
                         let ny = y + dy[i];
                         let nw = [lw, w - lw, w - lw, lw][i];
                         let nh = [lh, lh, h - lh, h - lh][i];
                         let nret = self.calc(nx, ny, nw, nh, c);
-                        nlcost += nret.0;
-                        nlprogram.push(nret.1);
+                        nlcost += nret;
+                        nlchilds.push(Child::new(nx, ny, nw, nh, c));
                     }
                     if ncost + nlcost < ret.0 {
                         ret.0 = ncost + nlcost;
                         // assert!(ncost + nlcost > 100);
                         ret.1 = nprogram.clone();
-                        ret.1
-                             .0
-                            .append(&mut self.renumber_block_id(&mut nlprogram).0);
+                        ret.2 = nlchilds;
                     }
                     nprogram.0.pop().unwrap();
                 }
@@ -155,23 +178,21 @@ impl DpAI {
                     self.image.height(),
                 )
                 .unwrap();
-                let mut nlprogram = vec![];
+                let mut nlchilds = vec![];
                 for i in 0..2 {
                     let nx = x + dx[i];
                     let ny = y + dy[i];
                     let nw = [lw, w - lw][i];
                     let nh = [h, h][i];
                     let nret = self.calc(nx, ny, nw, nh, c);
-                    nlcost += nret.0;
-                    nlprogram.push(nret.1);
+                    nlcost += nret;
+                    nlchilds.push(Child::new(nx, ny, nw, nh, c));
                 }
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
                     // assert!(ncost + nlcost > 100);
                     ret.1 = nprogram.clone();
-                    ret.1
-                         .0
-                        .append(&mut self.renumber_block_id(&mut nlprogram).0);
+                    ret.2 = nlchilds;
                 }
                 nprogram.0.pop().unwrap();
             }
@@ -190,33 +211,64 @@ impl DpAI {
                     self.image.height(),
                 )
                 .unwrap();
-                let mut nlprogram = vec![];
+                let mut nlchilds = vec![];
                 for i in 0..2 {
                     let nx = x + dx[i];
                     let ny = y + dy[i];
                     let nw = [w, w][i];
                     let nh = [lh, h - lh][i];
                     let nret = self.calc(nx, ny, nw, nh, c);
-                    nlcost += nret.0;
-                    nlprogram.push(nret.1);
+                    nlcost += nret;
+                    nlchilds.push(Child::new(nx, ny, nw, nh, c));
                 }
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
                     // assert!(ncost + nlcost > 100);
                     ret.1 = nprogram.clone();
-                    ret.1
-                         .0
-                        .append(&mut self.renumber_block_id(&mut nlprogram).0);
+                    ret.2 = nlchilds;
                 }
                 nprogram.0.pop().unwrap();
             }
         }
-        self.memo[x][y][w][h][color_id] = Some(ret.clone());
+        let score = ret.0;
+        self.memo[x][y][w][h][color_id] = Some(ret);
         // println!(
         //     "{} {} {} {} {} {} {:?} {}",
         //     x, y, w, h, color_id, ret.0, state, ret.1
         // );
-        return ret;
+        return score;
+    }
+
+    // calcでProgramを返すとコピーが二乗行われるので後から復元する
+    fn restore_program(
+        &self,
+        program: &mut Program,
+        x: usize,
+        y: usize,
+        w: usize,
+        h: usize,
+        color_id: usize,
+        block_id: &mut BlockId,
+    ) {
+        let (_score, mut lprogram, childs) = self.memo[x][y][w][h][color_id].clone().unwrap();
+        for mv in lprogram.0.iter_mut() {
+            mv.convert_block_id(&block_id);
+            program.0.push(mv.clone());
+        }
+        for i in 0..childs.len() {
+            let child = childs[i];
+            block_id.0.push_back(i as u32);
+            self.restore_program(
+                program,
+                child.x,
+                child.y,
+                child.w,
+                child.h,
+                child.color_id,
+                block_id,
+            );
+            block_id.0.pop_back();
+        }
     }
 
     fn calc_similality(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i64 {
@@ -243,10 +295,10 @@ impl DpAI {
     }
     fn make_state(&self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> State {
         let d = self.memo.len();
-        let l = x * (self.image.width() / d);
-        let t = y * (self.image.height() / d);
-        let pw = std::cmp::min((x + w) * (self.image.width() / d), self.image.width()) - l;
-        let ph = std::cmp::min((y + h) * (self.image.height() / d), self.image.height()) - t;
+        let l = self.topleft().x as usize + x * (self.width() / d);
+        let t = self.topleft().y as usize + y * (self.height() / d);
+        let pw = std::cmp::min((x + w) * (self.width() / d), self.width()) - l;
+        let ph = std::cmp::min((y + h) * (self.height() / d), self.height()) - t;
         let mut blocks = HashMap::new();
         blocks.insert(
             BlockId::new(&vec![]),
@@ -263,29 +315,38 @@ impl DpAI {
     }
     fn convert_point(&self, x: usize, y: usize) -> Point {
         let d = self.memo.len();
-        let l = x * (self.image.width() / d);
-        let t = y * (self.image.height() / d);
-        return Point::new(l as i32, t as i32);
+        let l = self.topleft().x + (x * (self.width() / d)) as i32;
+        let t = self.topleft().y + (y * (self.height() / d)) as i32;
+        return Point::new(l, t);
     }
-    fn renumber_block_id(&self, sub_programs: &mut Vec<Program>) -> Program {
-        let mut ret = Program(vec![]);
-        for i in 0..sub_programs.len() {
-            for j in 0..sub_programs[i].0.len() {
-                match &mut sub_programs[i].0[j] {
-                    Move::PCut { block_id, point: _ } => block_id.0.push_front(i as u32),
-                    Move::LCut {
-                        block_id,
-                        orientation: _,
-                        line_number: _,
-                    } => block_id.0.push_front(i as u32),
-                    Move::Color { block_id, color: _ } => block_id.0.push_front(i as u32),
-                    _ => {
-                        unimplemented!()
-                    }
-                }
-            }
-            ret.0.append(&mut sub_programs[i].0);
-        }
-        return ret;
+    // fn renumber_block_id(&self, sub_programs: &mut Vec<Program>) -> Program {
+    //     let mut ret = Program(vec![]);
+    //     for i in 0..sub_programs.len() {
+    //         for j in 0..sub_programs[i].0.len() {
+    //             match &mut sub_programs[i].0[j] {
+    //                 Move::PCut { block_id, point: _ } => block_id.0.push_front(i as u32),
+    //                 Move::LCut {
+    //                     block_id,
+    //                     orientation: _,
+    //                     line_number: _,
+    //                 } => block_id.0.push_front(i as u32),
+    //                 Move::Color { block_id, color: _ } => block_id.0.push_front(i as u32),
+    //                 _ => {
+    //                     unimplemented!()
+    //                 }
+    //             }
+    //         }
+    //         ret.0.append(&mut sub_programs[i].0);
+    //     }
+    //     return ret;
+    // }
+    fn topleft(&self) -> Point {
+        Point::new(0, 0)
+    }
+    fn width(&self) -> usize {
+        self.image.width()
+    }
+    fn height(&self) -> usize {
+        self.image.height()
     }
 }
