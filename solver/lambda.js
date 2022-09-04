@@ -7,13 +7,14 @@ exports.handler = async function (event, _context) {
 
   const command = "/code/target/release/icfpc2022";
   const args = [
-    ...event.args.trim().split(/\s+/),
+    "-q",
     "-i",
     `/code/problems/${problemId}.png`,
     "-o",
     "/tmp",
     "-r",
     `${runId}`,
+    ...event.args.trim().split(/\s+/),
   ];
 
   console.log("args", args);
