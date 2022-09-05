@@ -66,7 +66,9 @@ impl ChainedAI for AnnealingAI {
             }
             let i_chosen = candidates[rng.gen::<usize>() % candidates.len()];
             let old = solution.0[i_chosen].clone();
-            let state = simulate_all(&solution, &initial_state).unwrap();
+            let state = simulate_all(&solution, &initial_state, image.width(), image.height())
+                .unwrap()
+                .0;
             let delta = 5; // TODO
             let modified = match old {
                 Move::LCut {

@@ -276,19 +276,32 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
     Some(())
 }
 
-pub fn simulate_all(program: &Program, initial_state: &State) -> Result<State, ProgramExecError> {
+pub fn simulate_all(
+    program: &Program,
+    initial_state: &State,
+    w: usize,
+    h: usize,
+) -> Result<(State, i64), ProgramExecError> {
     let mut state = initial_state.clone();
-    simulate_partial(&mut state, &program.0)?;
-    Ok(state)
+    let cost = simulate_partial(&mut state, &program.0, w, h)?;
+    Ok((state, cost))
 }
 
-pub fn simulate_partial(state: &mut State, program: &[Move]) -> Result<(), ProgramExecError> {
-    let mut line_number = 1;
-    for mv in program {
-        simulate(state, mv).ok_or_else(|| program_exec_error(line_number, mv.clone(), state))?;
-        line_number += 1;
+pub fn simulate_partial(
+    state: &mut State,
+    program: &[Move],
+    w: usize,
+    h: usize,
+) -> Result<i64, ProgramExecError> {
+    let mut cost = 0;
+    for line_number in 0..program.len() {
+        let mv = &program[line_number];
+        cost += move_cost(state, &mv, w, h)
+            .ok_or_else(|| program_exec_error(line_number + 1, mv.clone(), &state))?;
+        simulate(state, mv)
+            .ok_or_else(|| program_exec_error(line_number + 1, mv.clone(), &state))?;
     }
-    Ok(())
+    Ok(cost)
 }
 
 static COST_COEFF_TABLE: [[f32; 5]; 2] = [
@@ -344,7 +357,7 @@ pub fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
     );
 }
 
-fn rasterize_parital_state(p: Point, size: Point, state: &State, w: usize, h: usize) -> Image {
+pub fn rasterize_parital_state(p: Point, size: Point, state: &State, w: usize, h: usize) -> Image {
     let mut image = Image::new(w, h);
 
     // ブロック a とブロック b がマージされてブロック c ができたとする。
@@ -359,6 +372,7 @@ fn rasterize_parital_state(p: Point, size: Point, state: &State, w: usize, h: us
     image
 }
 
+#[allow(dead_code)]
 pub fn calc_state_similarity(state: &State, target_image: &Image) -> i64 {
     let w = target_image.width();
     let h = target_image.height();
@@ -379,6 +393,14 @@ pub fn calc_partial_state_similarity(
     let w = target_image.width();
     let h = target_image.height();
     let current_image = rasterize_parital_state(p, size, state, w, h);
+    calc_partial_image_similarity(p, size, &current_image, target_image)
+}
+pub fn calc_partial_image_similarity(
+    p: Point,
+    size: Point,
+    current_image: &Image,
+    target_image: &Image,
+) -> i64 {
     let mut similarity: f64 = 0.0;
     for y in p.y..(p.y + size.y) {
         for x in p.x..(p.x + size.x) {
@@ -415,16 +437,28 @@ pub fn calc_score(
 ) -> Result<i64, ProgramExecError> {
     let h = target_image.height();
     let w = target_image.width();
-    let mut state = initial_state.clone();
+    calc_partial_score(
+        program,
+        target_image,
+        Point::new(0, 0),
+        Point::new(w as i32, h as i32),
+        initial_state,
+    )
+}
+
+pub fn calc_partial_score(
+    program: &Program,
+    target_image: &Image,
+    p: Point,
+    size: Point,
+    initial_state: &State,
+) -> Result<i64, ProgramExecError> {
+    let h = target_image.height();
+    let w = target_image.width();
     let mut cost = 0;
-    for line_number in 0..program.0.len() {
-        let mv = &program.0[line_number];
-        cost += move_cost(&state, &mv, w, h)
-            .ok_or_else(|| program_exec_error(line_number + 1, mv.clone(), &state))?;
-        simulate(&mut state, mv)
-            .ok_or_else(|| program_exec_error(line_number + 1, mv.clone(), &state))?;
-    }
-    cost += calc_state_similarity(&state, target_image);
+    let (state, mcost) = simulate_all(program, initial_state, w, h)?;
+    cost += mcost;
+    cost += calc_partial_state_similarity(p, size, &state, target_image);
     Ok(cost)
 }
 

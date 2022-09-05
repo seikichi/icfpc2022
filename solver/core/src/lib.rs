@@ -157,7 +157,7 @@ pub fn run() -> anyhow::Result<Output> {
     }
 
     let score = simulator::calc_score(&program, &img, &initial_state)?;
-    let state = simulator::simulate_all(&program, &initial_state)?;
+    let state = simulator::simulate_all(&program, &initial_state, img.width(), img.height())?.0;
     let output_image = simulator::rasterize_state(&state, img.width(), img.height());
 
     let output_filename = opt.output_dir.join(problem_id.clone() + ".isl");
