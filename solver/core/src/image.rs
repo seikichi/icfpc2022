@@ -201,7 +201,9 @@ pub fn k_means_color_sampling(
 
     // k-means
     let mut samples = initial_samples;
+    let mut prev_sum_sd = 1e8;
     for _i in 0..n_iter {
+        let mut sum_sd = 0.0;
         let mut sum = vec![Color::ZERO; samples.len()];
         let mut count = vec![0; samples.len()];
 
@@ -219,12 +221,19 @@ pub fn k_means_color_sampling(
                 }
                 sum[best_cluster] += pixel;
                 count[best_cluster] += 1;
+                sum_sd += min_diff;
             }
         }
 
         for i in 0..samples.len() {
             samples[i] = sum[i] / (count[i] as f32);
         }
+
+        // 誤差の合計が減らなくなったら終わり
+        if (prev_sum_sd - sum_sd).abs() < 1e-5 {
+            break;
+        }
+        prev_sum_sd = sum_sd;
     }
 
     samples
@@ -250,7 +259,6 @@ pub fn replace_pixels_to_nearest_samples(image: &mut Image, samples: &[Color]) {
 }
 
 /*
-#[cfg(test)]
 mod tests {
     use super::*;
 
@@ -258,11 +266,21 @@ mod tests {
     #[test]
     fn k_means_test() {
         for i in 6..=19 {
-            let mut image = open(format!("./problems/{i}.png")).unwrap();
-            let samples = k_means_color_sampling(&image, 5, 8, &mut rand::thread_rng());
+            let mut image = open(format!("../problems/{i}.png")).unwrap();
+            let samples = k_means_color_sampling(
+                &image,
+                5,
+                15,
+                0,
+                0,
+                image.width(),
+                image.height(),
+                &mut rand::thread_rng(),
+            );
             replace_pixels_to_nearest_samples(&mut image, &samples);
             image.save(format!("/tmp/{i}.png")).unwrap();
         }
+        assert!(false);
     }
 }
 */
