@@ -7,6 +7,8 @@ use crate::simulator::SimpleBlock;
 use crate::simulator::State;
 use arrayvec::ArrayVec;
 use rand::rngs::ThreadRng;
+#[allow(unused_imports)]
+use smallvec::smallvec;
 
 use super::MergeAI;
 #[derive(Debug, Clone, Copy)]
@@ -374,7 +376,7 @@ impl DpAI {
 #[test]
 fn dp_ai_test() {
     let mut blocks = std::collections::HashMap::new();
-    let block_id = BlockId(vec![0, 0, 0, 2]);
+    let block_id = BlockId(smallvec![0, 0, 0, 2]);
     let simpel_block = SimpleBlock::new(Point::new(1, 1), Point::new(3, 2), Color::ONE);
     blocks.insert(block_id, simpel_block);
     let state = State {

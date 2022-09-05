@@ -1,3 +1,5 @@
+use smallvec::smallvec;
+
 use crate::ai::HeadAI;
 use crate::image;
 use crate::isl;
@@ -17,7 +19,7 @@ impl HeadAI for GridAI {
         let grid_height = (height / self.rows) as i32;
         let grid_width = (width / self.cols) as i32;
 
-        let mut block_id = Vec::from_iter(vec![0]);
+        let mut block_id = smallvec![0];
 
         // y 軸で切ってく...
         for i in 1..self.rows + 1 {
