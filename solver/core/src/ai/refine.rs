@@ -112,11 +112,12 @@ impl RefineAi {
             // 1/100 の確率でランダムにDpAIで分割する
             let end_state = simulate_all(&prev_program, initial_state).unwrap();
             let block_id = end_state.sample_active_block(rng);
-            let next_program =
+            let mut next_program =
                 self.solve_by_dp_ai_one_block(next_program, &block_id, image, initial_state, rng);
             if prev_program.len() == next_program.len() {
                 return None;
             }
+            next_program.remove_redundant_color_move();
             description = format!("Divide by DpAI: {}", block_id);
             return Some((next_program, description));
         }
@@ -155,6 +156,7 @@ impl RefineAi {
                         initial_state,
                         rng,
                     );
+                    next_program.remove_redundant_color_move();
                     description = format!("Remove PCut & divide by DpAI");
                 }
             }
@@ -191,6 +193,7 @@ impl RefineAi {
                         initial_state,
                         rng,
                     );
+                    next_program.remove_redundant_color_move();
                     description = format!("Remove LCut & divide by DpAI");
                 }
             }
@@ -254,8 +257,8 @@ impl RefineAi {
         let c = rng.gen_range(3..=8);
         let temp_state = end_state.block_state(block_id.clone(), initial_state.cost_coeff_version);
         let mut dp_ai = ai::DpAI::new(d, c);
-        let dp_program = dp_ai.solve(image, &temp_state);
-        program.0.append(&mut dp_program.0.clone());
+        let mut dp_program = dp_ai.solve(image, &temp_state);
+        program.0.append(&mut dp_program.0);
         program.remove_redundant_color_move();
         return program;
     }
