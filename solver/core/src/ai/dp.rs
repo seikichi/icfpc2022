@@ -35,6 +35,7 @@ pub struct DpAI {
     divide_num: usize,
     rng: ThreadRng,
     sample_color_num: usize,
+    k_means_iter_num: usize,
     sampled_color: Vec<Color>,
     // memo[color_id][x][y][w][h] -> score
     // memo_restore[color_id][x][y][w][h] -> Some(今のブロックに対するProgram, 復元用の次の最適解))
@@ -74,7 +75,7 @@ impl HeadAI for DpAI {
         self.sampled_color = image::k_means_color_sampling(
             image,
             self.sample_color_num - 1,
-            20,
+            self.k_means_iter_num,
             self.topleft().x as usize,
             self.topleft().y as usize,
             self.width() as usize,
@@ -97,7 +98,7 @@ impl HeadAI for DpAI {
     }
 }
 impl DpAI {
-    pub fn new(divide_num: usize, sample_color_num: usize) -> Self {
+    pub fn new(divide_num: usize, sample_color_num: usize, k_means_iter_num: usize) -> Self {
         let memo = vec![
             vec![
                 vec![vec![vec![1 << 30; divide_num + 1]; divide_num + 1]; divide_num];
@@ -118,6 +119,7 @@ impl DpAI {
             divide_num: divide_num,
             rng: rand::thread_rng(),
             sample_color_num,
+            k_means_iter_num,
             sampled_color: vec![],
             memo,
             memo_restore,
@@ -388,7 +390,7 @@ fn dp_ai_test() {
         "rr.....", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..",
         "bbggg..",
     ]);
-    let mut dp_ai = DpAI::new(2, 3);
+    let mut dp_ai = DpAI::new(2, 3, 20);
 
     let dp_program = dp_ai.solve(&image, &state);
     assert!(dp_ai.convert_point(0, 0) == Point::new(1, 1));

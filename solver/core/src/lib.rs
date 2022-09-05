@@ -69,7 +69,7 @@ fn parse_ai_string(
         "OneColor" => Box::new(ai::OneColorAI {}),
         "Grid" => Box::new(ai::GridAI { rows: 4, cols: 4 }),
         "Cross" => Box::new(ai::CrossAI { size: 3 }),
-        "DP" => Box::new(ai::DpAI::new(opt.dp_divide_num, opt.dp_color_num)),
+        "DP" => Box::new(ai::DpAI::new(opt.dp_divide_num, opt.dp_color_num, 20)),
         // "Merge" => Box::new(ai::MergeAI::new()),
         "ChangeColor" => Box::new(ai::ChangeColorAI {}),
         "Swap" => Box::new(ai::SwapAI {}),
