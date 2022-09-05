@@ -113,7 +113,6 @@ impl HeadAI for DpAI {
             &mut self.rng,
         );
         self.sampled_color.push(self.initial_block.color);
-        self.sampled_color.push(INVALID_COLOR);
         self.sampled_color.reverse();
         // 画像の色数が sample_color_num より小さいような場合は
         // sampled_color が sample_color_num に満たない
