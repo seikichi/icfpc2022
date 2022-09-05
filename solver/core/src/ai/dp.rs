@@ -30,6 +30,7 @@ impl Child {
 }
 
 pub struct DpAI {
+    divide_num: usize,
     rng: ThreadRng,
     sample_color_num: usize,
     sampled_color: Vec<Color>,
@@ -45,7 +46,7 @@ pub struct DpAI {
 
 impl HeadAI for DpAI {
     fn solve(&mut self, image: &image::Image, initial_state: &simulator::State) -> Program {
-        let d = self.memo[0].len();
+        let d = self.divide_num;
         self.image = image.clone();
         let mut ret = Program(vec![]);
         let mut initial_block_id = initial_state.blocks.keys().next().unwrap().clone();
@@ -112,6 +113,7 @@ impl DpAI {
             ];
         let similality_memo = vec![vec![vec![None; divide_num]; divide_num]; sample_color_num];
         DpAI {
+            divide_num: divide_num,
             rng: rand::thread_rng(),
             sample_color_num,
             sampled_color: vec![],
@@ -129,7 +131,7 @@ impl DpAI {
         }
     }
     fn calc(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i32 {
-        let d = self.memo[0].len();
+        let d = self.divide_num;
         assert!(x + w <= d);
         assert!(y + h <= d);
         {
@@ -346,28 +348,8 @@ impl DpAI {
         }
         return ret;
     }
-    // fn make_state(&self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> State {
-    //     let d = self.memo.len();
-    //     let l = self.topleft().x as usize + x * (self.width() / d);
-    //     let t = self.topleft().y as usize + y * (self.height() / d);
-    //     let pw = std::cmp::min((x + w) * (self.width() / d), self.width()) - l;
-    //     let ph = std::cmp::min((y + h) * (self.height() / d), self.height()) - t;
-    //     let mut blocks = HashMap::new();
-    //     blocks.insert(
-    //         BlockId::new(&vec![]),
-    //         SimpleBlock::new(
-    //             Point::new(l as i32, t as i32),
-    //             Point::new(pw as i32, ph as i32),
-    //             self.sampled_color[color_id],
-    //         ),
-    //     );
-    //     State {
-    //         blocks,
-    //         next_global_id: 1,
-    //     }
-    // }
     fn convert_point(&self, x: usize, y: usize) -> Point {
-        let d = self.memo[0].len();
+        let d = self.divide_num;
         let l = std::cmp::min(
             self.topleft().x + self.width() as i32,
             self.topleft().x + (x * self.width() / d) as i32,
@@ -378,27 +360,6 @@ impl DpAI {
         );
         return Point::new(l, t);
     }
-    // fn renumber_block_id(&self, sub_programs: &mut Vec<Program>) -> Program {
-    //     let mut ret = Program(vec![]);
-    //     for i in 0..sub_programs.len() {
-    //         for j in 0..sub_programs[i].0.len() {
-    //             match &mut sub_programs[i].0[j] {
-    //                 Move::PCut { block_id, point: _ } => block_id.0.push_front(i as u32),
-    //                 Move::LCut {
-    //                     block_id,
-    //                     orientation: _,
-    //                     line_number: _,
-    //                 } => block_id.0.push_front(i as u32),
-    //                 Move::Color { block_id, color: _ } => block_id.0.push_front(i as u32),
-    //                 _ => {
-    //                     unimplemented!()
-    //                 }
-    //             }
-    //         }
-    //         ret.0.append(&mut sub_programs[i].0);
-    //     }
-    //     return ret;
-    // }
     fn topleft(&self) -> Point {
         self.initial_block.p
     }
