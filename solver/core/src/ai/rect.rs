@@ -1,10 +1,7 @@
 use crate::ai::HeadAI;
 use crate::image;
 use crate::isl;
-use crate::isl::Point;
 use crate::simulator;
-
-use std::collections::HashMap;
 
 pub struct RectAI {}
 
@@ -21,9 +18,9 @@ impl HeadAI for RectAI {
         let height = image.height();
         let width = image.width();
 
-        let mut current_image = image.clone();
+        let mut _current_image = image.clone();
         let mut program = vec![];
-        let threashold = 1000;
+        let _threashold = 1000;
 
         let mut visited = vec![vec![false; width]; height];
 
