@@ -1,9 +1,10 @@
 use std::{collections::HashSet, fmt::Display};
 
 use glam::{IVec2, Vec4};
+use smallvec::SmallVec;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct BlockId(pub Vec<u32>);
+pub struct BlockId(pub SmallVec<[u16; 8]>);
 impl Display for BlockId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut ret = String::new();
@@ -18,10 +19,10 @@ impl Display for BlockId {
 }
 impl BlockId {
     pub fn default() -> Self {
-        BlockId(Vec::with_capacity(0))
+        BlockId(SmallVec::new())
     }
-    pub fn new(id: &[u32]) -> Self {
-        BlockId(Vec::from_iter(id.iter().copied()))
+    pub fn new(id: &[u16]) -> Self {
+        BlockId(SmallVec::from_slice(id))
     }
     pub fn is_child(&self, target: &BlockId) -> bool {
         if self.0.len() >= target.0.len() {

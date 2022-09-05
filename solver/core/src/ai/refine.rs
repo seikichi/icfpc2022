@@ -320,7 +320,7 @@ impl RefineAi {
         let d = rng.gen_range(4..=self.dp_divide_max);
         let c = rng.gen_range(3..=8);
         let temp_state = end_state.block_state(block_id.clone(), initial_state.cost_coeff_version);
-        let mut dp_ai = ai::DpAI::new(d, c);
+        let mut dp_ai = ai::DpAI::new(d, c, 10);
         let mut dp_program = dp_ai.solve(image, &temp_state);
         program.0.append(&mut dp_program.0);
         program.remove_redundant_color_move();

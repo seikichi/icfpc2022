@@ -7,6 +7,8 @@ use crate::simulator::SimpleBlock;
 use crate::simulator::State;
 use arrayvec::ArrayVec;
 use rand::rngs::ThreadRng;
+#[allow(unused_imports)]
+use smallvec::smallvec;
 
 use super::MergeAI;
 #[derive(Debug, Clone, Copy)]
@@ -33,6 +35,7 @@ pub struct DpAI {
     divide_num: usize,
     rng: ThreadRng,
     sample_color_num: usize,
+    k_means_iter_num: usize,
     sampled_color: Vec<Color>,
     // memo[color_id][x][y][w][h] -> score
     // memo_restore[color_id][x][y][w][h] -> Some(今のブロックに対するProgram, 復元用の次の最適解))
@@ -75,7 +78,7 @@ impl HeadAI for DpAI {
         self.sampled_color = image::k_means_color_sampling(
             image,
             self.sample_color_num - 1,
-            20,
+            self.k_means_iter_num,
             self.topleft().x as usize,
             self.topleft().y as usize,
             self.width() as usize,
@@ -98,7 +101,7 @@ impl HeadAI for DpAI {
     }
 }
 impl DpAI {
-    pub fn new(divide_num: usize, sample_color_num: usize) -> Self {
+    pub fn new(divide_num: usize, sample_color_num: usize, k_means_iter_num: usize) -> Self {
         let memo = vec![
             vec![
                 vec![vec![vec![1 << 30; divide_num + 1]; divide_num + 1]; divide_num];
@@ -119,6 +122,7 @@ impl DpAI {
             divide_num: divide_num,
             rng: rand::thread_rng(),
             sample_color_num,
+            k_means_iter_num,
             sampled_color: vec![],
             memo,
             memo_restore,
@@ -313,7 +317,7 @@ impl DpAI {
         }
         for i in 0..childs.len() {
             let child = childs[i];
-            block_id.0.push(i as u32);
+            block_id.0.push(i as u16);
             self.restore_program(
                 program,
                 child.x,
@@ -377,7 +381,7 @@ impl DpAI {
 #[test]
 fn dp_ai_test() {
     let mut blocks = std::collections::HashMap::new();
-    let block_id = BlockId(vec![0, 0, 0, 2]);
+    let block_id = BlockId(smallvec![0, 0, 0, 2]);
     let simpel_block = SimpleBlock::new(Point::new(1, 1), Point::new(3, 2), Color::ONE);
     blocks.insert(block_id, simpel_block);
     let state = State {
@@ -389,7 +393,7 @@ fn dp_ai_test() {
         "rr.....", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..", "bbggg..",
         "bbggg..",
     ]);
-    let mut dp_ai = DpAI::new(2, 3);
+    let mut dp_ai = DpAI::new(2, 3, 20);
 
     let dp_program = dp_ai.solve(&image, &state);
     assert!(dp_ai.convert_point(0, 0) == Point::new(1, 1));
