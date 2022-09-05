@@ -77,6 +77,9 @@ impl HeadAI for DpAI {
         );
         self.sampled_color.push(self.initial_block.color);
         self.sampled_color.reverse();
+        // 画像の色数が sample_color_num より小さいような場合は
+        // sampled_color が sample_color_num に満たない
+        self.sample_color_num = self.sampled_color.len();
 
         // dp
         let _score = self.calc(0, 0, d, d, 0);
