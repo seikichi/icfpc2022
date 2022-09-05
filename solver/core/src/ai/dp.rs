@@ -5,6 +5,7 @@ use crate::simulator;
 use crate::simulator::BlockState;
 use crate::simulator::SimpleBlock;
 use crate::simulator::State;
+use arrayvec::ArrayVec;
 use rand::rngs::ThreadRng;
 
 use super::MergeAI;
@@ -33,7 +34,7 @@ pub struct DpAI {
     sample_color_num: usize,
     sampled_color: Vec<Color>,
     // memo[x][y][w][h][color_id] -> (score, Some(今のブロックに対するProgram, 復元用の次の最適解))
-    memo: Vec<Vec<Vec<Vec<Vec<(i64, Option<(Program, Vec<Child>)>)>>>>>,
+    memo: Vec<Vec<Vec<Vec<Vec<(i64, Option<(ArrayVec<Move, 2>, ArrayVec<Child, 4>)>)>>>>>,
     similality_memo: Vec<Vec<Vec<Option<i64>>>>,
     image: image::Image,
     initial_state: State,
@@ -131,8 +132,8 @@ impl DpAI {
         }
         let mut ret = (
             self.calc_similality(x, y, w, h, color_id),
-            Program(vec![]),
-            vec![],
+            ArrayVec::<_, 2>::new(),
+            ArrayVec::<_, 4>::new(),
         );
         let lt = self.convert_point(x, y);
         let rb = self.convert_point(x + w, y + h);
@@ -157,8 +158,9 @@ impl DpAI {
                 let scost = self.calc_similality(x, y, w, h, c);
                 if ncost + scost < ret.0 {
                     ret.0 = ncost + scost;
-                    ret.1 = Program(vec![mv.clone()]);
-                    ret.2 = vec![];
+                    ret.1 = ArrayVec::new();
+                    ret.1.push(mv.clone());
+                    ret.2 = ArrayVec::new();
                 }
                 color_move = Some(mv);
             }
@@ -178,7 +180,7 @@ impl DpAI {
                         self.image.height(),
                         self.initial_state.cost_coeff_version,
                     );
-                    let mut nlchilds = vec![];
+                    let mut nlchilds = ArrayVec::<_, 4>::new();
                     for i in 0..4 {
                         let nx = x + dx[i];
                         let ny = y + dy[i];
@@ -190,11 +192,11 @@ impl DpAI {
                     }
                     if ncost + nlcost < ret.0 {
                         ret.0 = ncost + nlcost;
-                        ret.1 = Program(vec![]);
+                        ret.1 = ArrayVec::new();
                         if let Some(cmv) = color_move.clone() {
-                            ret.1 .0.push(cmv);
+                            ret.1.push(cmv);
                         }
-                        ret.1 .0.push(mv);
+                        ret.1.push(mv);
                         ret.2 = nlchilds;
                     }
                 }
@@ -215,7 +217,7 @@ impl DpAI {
                     self.image.height(),
                     self.initial_state.cost_coeff_version,
                 );
-                let mut nlchilds = vec![];
+                let mut nlchilds = ArrayVec::<_, 4>::new();
                 for i in 0..2 {
                     let nx = x + dx[i];
                     let ny = y + dy[i];
@@ -227,11 +229,11 @@ impl DpAI {
                 }
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
-                    ret.1 = Program(vec![]);
+                    ret.1 = ArrayVec::new();
                     if let Some(cmv) = color_move.clone() {
-                        ret.1 .0.push(cmv);
+                        ret.1.push(cmv);
                     }
-                    ret.1 .0.push(mv);
+                    ret.1.push(mv);
                     ret.2 = nlchilds;
                 }
             }
@@ -250,7 +252,7 @@ impl DpAI {
                     self.image.height(),
                     self.initial_state.cost_coeff_version,
                 );
-                let mut nlchilds = vec![];
+                let mut nlchilds = ArrayVec::<_, 4>::new();
                 for i in 0..2 {
                     let nx = x + dx[i];
                     let ny = y + dy[i];
@@ -262,11 +264,11 @@ impl DpAI {
                 }
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
-                    ret.1 = Program(vec![]);
+                    ret.1 = ArrayVec::new();
                     if let Some(cmv) = color_move.clone() {
-                        ret.1 .0.push(cmv);
+                        ret.1.push(cmv);
                     }
-                    ret.1 .0.push(mv);
+                    ret.1.push(mv);
                     ret.2 = nlchilds;
                 }
             }
@@ -291,7 +293,7 @@ impl DpAI {
         block_id: &mut BlockId,
     ) {
         let (mut lprogram, childs) = self.memo[x][y][w][h][color_id].1.clone().unwrap();
-        for mv in lprogram.0.iter_mut() {
+        for mv in lprogram.iter_mut() {
             mv.convert_block_id(&block_id);
             program.0.push(mv.clone());
         }
