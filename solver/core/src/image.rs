@@ -179,7 +179,8 @@ pub fn k_means_color_sampling(
         }
         // SD(x) / ∑SD(x) の確率でピクセルを選ぶ
         let d_sum = nsd.iter().map(|row| row.iter().sum::<f32>()).sum::<f32>();
-        if d_sum < 1e-8 { // d_sum == 0 のときは、今の代表点だけで完全に色を表現できている
+        if d_sum < 1e-8 {
+            // d_sum == 0 のときは、今の代表点だけで完全に色を表現できている
             return initial_samples;
         }
         let p = rng.gen::<f32>();

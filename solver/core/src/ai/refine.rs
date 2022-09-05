@@ -150,7 +150,6 @@ impl ai::ChainedAI for RefineAi {
                     best_score = new_score;
                     best_program = prev_program.clone();
                 }
-
             }
 
             if self.show_intermediates && iter % 50 == 0 {
@@ -211,10 +210,14 @@ impl RefineAi {
                 let r = rng.gen_range(0..8);
                 if r > 0 {
                     // change PCut point
-                    let dx = rng.gen_range(-5..=5);
-                    let dy = rng.gen_range(-5..=5);
-                    if dx == 0 || dy == 0 {
-                        return None;
+                    let mut dx;
+                    let mut dy;
+                    loop {
+                        dx = rng.gen_range(-5..=5);
+                        dy = rng.gen_range(-5..=5);
+                        if dx != 0 || dy != 0 {
+                            break;
+                        }
                     }
                     let npoint = Point::new(point.x + dx, point.y + dy);
                     next_program.0[t] = Move::PCut {
@@ -256,9 +259,12 @@ impl RefineAi {
                 let r = rng.gen_range(0..8);
                 if r > 0 {
                     // change LCut position
-                    let d = rng.gen_range(-5..=5);
-                    if d == 0 {
-                        return None;
+                    let mut d;
+                    loop {
+                        d = rng.gen_range(-5..=5);
+                        if d != 0 {
+                            break;
+                        }
                     }
                     next_program.0[t] = Move::LCut {
                         block_id: block_id.clone(),
