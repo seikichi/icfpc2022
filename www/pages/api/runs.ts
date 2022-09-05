@@ -25,27 +25,32 @@ export default async function handler(
       .json({ success: false, message: "不正なパラメーターです" });
   }
 
-  // 時刻チェック
-  const prevs = await fetchRunList();
-  const last = Math.max(0, ...prevs.map((p) => p.time));
-  const current = new Date().getTime() / 1000;
-  if (last > current - 10) {
-    return res
-      .status(400)
-      .json({ success: false, message: "実行は10秒に1回許可されています" });
-  }
+  return res.status(400).json({
+    success: false,
+    message: "コンテスト終了後の実行は許可されていません",
+  });
 
-  // DB 追加したり Lambda 実行したりする
-  const { args, target } = body.data;
-  const uuid = uuidv4();
+  // // 時刻チェック
+  // const prevs = await fetchRunList();
+  // const last = Math.max(0, ...prevs.map((p) => p.time));
+  // const current = new Date().getTime() / 1000;
+  // if (last > current - 10) {
+  //   return res
+  //     .status(400)
+  //     .json({ success: false, message: "実行は10秒に1回許可されています" });
+  // }
 
-  try {
-    await putRun({ uuid, args, target });
-  } catch (e) {
-    console.error(e);
-    res.status(200).json({ success: false, message: "登録に失敗しました" });
-    return;
-  }
+  // // DB 追加したり Lambda 実行したりする
+  // const { args, target } = body.data;
+  // const uuid = uuidv4();
 
-  res.status(200).json({ success: true });
+  // try {
+  //   await putRun({ uuid, args, target });
+  // } catch (e) {
+  //   console.error(e);
+  //   res.status(200).json({ success: false, message: "登録に失敗しました" });
+  //   return;
+  // }
+
+  // res.status(200).json({ success: true });
 }
