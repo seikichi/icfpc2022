@@ -7,6 +7,7 @@ use crate::simulator::SimpleBlock;
 use crate::simulator::State;
 use arrayvec::ArrayVec;
 use rand::rngs::ThreadRng;
+use rand::seq::SliceRandom;
 #[allow(unused_imports)]
 use smallvec::smallvec;
 
@@ -42,6 +43,8 @@ pub struct DpAI {
     memo: Vec<Vec<Vec<Vec<Vec<i32>>>>>,
     memo_restore: Vec<Vec<Vec<Vec<Vec<Option<(ArrayVec<Move, 2>, ArrayVec<Child, 4>)>>>>>>,
     similality_memo: Vec<Vec<Vec<Option<i32>>>>,
+    x_offsets: Vec<i32>,
+    y_offsets: Vec<i32>,
     target_image: image::Image,
     initial_state: State,
     initial_block_id: Option<BlockId>,
@@ -100,6 +103,23 @@ impl HeadAI for DpAI {
         if self.width() < d || self.height() < d {
             return ret;
         }
+        self.x_offsets = (self.initial_block.p.x
+            ..(self.initial_block.p.x + self.initial_block.size.x))
+            .collect::<Vec<_>>();
+        self.x_offsets.shuffle(&mut self.rng);
+        self.x_offsets = self.x_offsets[0..d].to_vec();
+        self.x_offsets.sort();
+        self.x_offsets
+            .push(self.initial_block.p.x + self.initial_block.size.x);
+
+        self.y_offsets = (self.initial_block.p.y
+            ..(self.initial_block.p.y + self.initial_block.size.y))
+            .collect::<Vec<_>>();
+        self.y_offsets.shuffle(&mut self.rng);
+        self.y_offsets = self.y_offsets[0..d].to_vec();
+        self.y_offsets.sort();
+        self.y_offsets
+            .push(self.initial_block.p.y + self.initial_block.size.y);
 
         // color sampling
         self.sampled_color = image::k_means_color_sampling(
@@ -170,6 +190,8 @@ impl DpAI {
                 state: BlockState::Active,
             },
             initial_image: image::Image::new(1, 1),
+            x_offsets: vec![],
+            y_offsets: vec![],
         }
     }
     fn calc(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i32 {
@@ -406,16 +428,17 @@ impl DpAI {
         return ret;
     }
     fn convert_point(&self, x: usize, y: usize) -> Point {
-        let d = self.divide_num;
-        let l = std::cmp::min(
-            self.topleft().x + self.width() as i32,
-            self.topleft().x + (x * self.width() / d) as i32,
-        );
-        let t = std::cmp::min(
-            self.topleft().y + self.height() as i32,
-            self.topleft().y + (y * self.height() / d) as i32,
-        );
-        return Point::new(l, t);
+        return Point::new(self.x_offsets[x], self.y_offsets[y]);
+        // let d = self.divide_num;
+        // let l = std::cmp::min(
+        //     self.topleft().x + self.width() as i32,
+        //     self.topleft().x + (x * self.width() / d) as i32,
+        // );
+        // let t = std::cmp::min(
+        //     self.topleft().y + self.height() as i32,
+        //     self.topleft().y + (y * self.height() / d) as i32,
+        // );
+        // return Point::new(l, t);
     }
     fn topleft(&self) -> Point {
         self.initial_block.p
