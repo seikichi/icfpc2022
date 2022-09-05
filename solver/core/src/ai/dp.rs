@@ -120,8 +120,11 @@ impl DpAI {
         let d = self.memo.len();
         assert!(x + w <= d);
         assert!(y + h <= d);
-        if self.memo[x][y][w][h][color_id].1.is_some() {
-            return self.memo[x][y][w][h][color_id].0;
+        {
+            let memo_item = &self.memo[x][y][w][h][color_id];
+            if memo_item.1.is_some() {
+                return memo_item.0;
+            }
         }
         let mut ret = (
             self.calc_similality(x, y, w, h, color_id),
