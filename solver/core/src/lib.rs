@@ -47,6 +47,9 @@ struct Opt {
     #[structopt(long = "refine-dp-divide-max", default_value = "10")]
     refine_dp_divide_max: usize,
 
+    #[structopt(long = "refine-show-intermediates")]
+    refine_show_intermediates: bool,
+
     #[structopt(long = "annealing-seconds", default_value = "10")]
     annealing_seconds: u64,
 
@@ -88,6 +91,7 @@ fn parse_ai_string(
                 },
                 initial_temperature: opt.refine_initial_temperature,
                 dp_divide_max: opt.refine_dp_divide_max,
+                show_intermediates: opt.refine_show_intermediates,
             }),
             "Annealing" => Box::new(ai::AnnealingAI {
                 time_limit: Duration::from_secs(opt.annealing_seconds),

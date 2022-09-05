@@ -23,6 +23,7 @@ pub struct RefineAi {
     pub algorithm: OptimizeAlgorithm,
     pub initial_temperature: f64,
     pub dp_divide_max: usize,
+    pub show_intermediates: bool,
 }
 
 impl ai::ChainedAI for RefineAi {
@@ -149,6 +150,13 @@ impl ai::ChainedAI for RefineAi {
                     best_score = new_score;
                     best_program = prev_program.clone();
                 }
+
+            }
+
+            if self.show_intermediates && iter % 50 == 0 {
+                let filename = format!("/tmp/iter-{iter:05}-score-{current_score}.png");
+                info!("write png to: {filename}");
+                current_image.save(filename).unwrap();
             }
         }
 
