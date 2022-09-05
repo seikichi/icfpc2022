@@ -310,7 +310,7 @@ impl DpAI {
         }
         for i in 0..childs.len() {
             let child = childs[i];
-            block_id.0.push(i as u32);
+            block_id.0.push(i as u16);
             self.restore_program(
                 program,
                 child.x,

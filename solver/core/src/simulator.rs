@@ -86,7 +86,7 @@ impl SimpleBlock {
 #[derive(Debug, Clone, PartialEq)]
 pub struct State {
     pub blocks: HashMap<BlockId, SimpleBlock>,
-    pub next_global_id: u32,
+    pub next_global_id: u16,
     pub cost_coeff_version: u8, // 0 or 1
 }
 impl State {
@@ -184,7 +184,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 let nx = p.x + dx[i];
                 let ny = p.y + dy[i];
                 let mut next_id = block_id.clone();
-                next_id.0.push(i as u32);
+                next_id.0.push(i as u16);
                 let next_simple_block = SimpleBlock::new(
                     Point::new(nx, ny),
                     Point::new(nw[i], nh[i]),
@@ -230,7 +230,7 @@ pub fn simulate(state: &mut State, mv: &Move) -> Option<()> {
                 let nx = p.x + dx[i];
                 let ny = p.y + dy[i];
                 let mut next_id = block_id.clone();
-                next_id.0.push(i as u32);
+                next_id.0.push(i as u16);
                 let next_simple_block = SimpleBlock::new(
                     Point::new(nx, ny),
                     Point::new(nw[i], nh[i]),

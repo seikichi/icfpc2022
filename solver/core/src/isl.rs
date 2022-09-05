@@ -3,7 +3,7 @@ use std::{collections::HashSet, fmt::Display};
 use glam::{IVec2, Vec4};
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct BlockId(pub Vec<u32>);
+pub struct BlockId(pub Vec<u16>);
 impl Display for BlockId {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut ret = String::new();
@@ -20,7 +20,7 @@ impl BlockId {
     pub fn default() -> Self {
         BlockId(Vec::with_capacity(0))
     }
-    pub fn new(id: &[u32]) -> Self {
+    pub fn new(id: &[u16]) -> Self {
         BlockId(Vec::from_iter(id.iter().copied()))
     }
     pub fn is_child(&self, target: &BlockId) -> bool {

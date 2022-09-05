@@ -43,7 +43,7 @@ pub fn load_initial_state(path: &str, image: &Image) -> State {
         let blocks = HashMap::new();
         let mut state = State {
             blocks,
-            next_global_id: config.blocks.len() as u32,
+            next_global_id: config.blocks.len() as u16,
             cost_coeff_version: if config.sourcePngPNG.is_some() { 1 } else { 0 },
         };
         assert!(config.width == image.width() as u32);
