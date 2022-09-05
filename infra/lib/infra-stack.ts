@@ -37,7 +37,7 @@ export class InfraStack extends cdk.Stack {
     const solver = new lambda.DockerImageFunction(this, "Solver", {
       code: lambda.DockerImageCode.fromImageAsset("../solver"),
       timeout: cdk.Duration.minutes(15),
-      memorySize: 1024,
+      memorySize: 4096,
       environment: { COMMIT: commitHash },
     });
     table.grantReadWriteData(solver);
