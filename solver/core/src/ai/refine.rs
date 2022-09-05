@@ -200,31 +200,36 @@ impl RefineAi {
             } => {
                 let mut state = initial_state.clone();
                 simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
-                let block = state.blocks[block_id];
-                let r = rng.gen_range(0..2);
-                let color = if r == 0 {
-                    // random sampling
-                    let x = block.p.x + rng.gen_range(0..block.size.x);
-                    let y = block.p.y + rng.gen_range(0..block.size.y);
-                    image.0[y as usize][x as usize]
+                let r = rng.gen_range(0..5);
+                if r > 0 {
+                    let block = state.blocks[block_id];
+                    let color = if r <= 2 {
+                        // random sampling
+                        let x = block.p.x + rng.gen_range(0..block.size.x);
+                        let y = block.p.y + rng.gen_range(0..block.size.y);
+                        image.0[y as usize][x as usize]
+                    } else {
+                        // average
+                        image.average(block.p, block.size)
+                    };
+                    let d = prev_color - color;
+                    let similarity = (d * 255.0).round().length() as f64;
+                    if similarity < 1.5 {
+                        return None;
+                    }
+                    next_program.0[t] = Move::Color {
+                        block_id: block_id.clone(),
+                        color,
+                    };
+                    description = format!(
+                        "change Color: {} -> {}",
+                        prev_color * 255.0,
+                        next_program.0[t]
+                    );
                 } else {
-                    // average
-                    image.average(block.p, block.size)
-                };
-                let d = prev_color - color;
-                let similarity = (d * 255.0).round().length() as f64;
-                if similarity < 1.5 {
-                    return None;
+                    description = format!("remove Color: {}", next_program.0[t]);
+                    next_program.0.remove(t);
                 }
-                next_program.0[t] = Move::Color {
-                    block_id: block_id.clone(),
-                    color,
-                };
-                description = format!(
-                    "change Color: {} -> {}",
-                    prev_color * 255.0,
-                    next_program.0[t]
-                );
             }
             _ => {
                 // Do nothing
