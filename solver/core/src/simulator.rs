@@ -348,18 +348,28 @@ pub fn move_cost_without_state(
 
 #[allow(dead_code)]
 pub fn rasterize_state(state: &State, w: usize, h: usize) -> Image {
-    return rasterize_parital_state(
+    let mut image = Image::new(w, h);
+    rasterize_parital_state(
         Point::new(0, 0),
         Point::new(w as i32, h as i32),
         state,
         w,
         h,
+        &mut image,
     );
+    return image;
 }
 
-pub fn rasterize_parital_state(p: Point, size: Point, state: &State, w: usize, h: usize) -> Image {
-    let mut image = Image::new(w, h);
-
+pub fn rasterize_parital_state(
+    p: Point,
+    size: Point,
+    state: &State,
+    w: usize,
+    h: usize,
+    output_image: &mut Image,
+) {
+    assert!(p.x + size.x <= w as i32);
+    assert!(p.y + size.y <= h as i32);
     // ブロック a とブロック b がマージされてブロック c ができたとする。
     // c を描画するよりも前に a と b が描画されることを保証するために
     // ここでソートする
@@ -367,9 +377,8 @@ pub fn rasterize_parital_state(p: Point, size: Point, state: &State, w: usize, h
     blocks.sort_by(|(id1, _), (id2, _)| id1.cmp(id2));
 
     for (_, simple_block) in blocks {
-        simple_block.partial_rasterize(p, size, &mut image);
+        simple_block.partial_rasterize(p, size, output_image);
     }
-    image
 }
 
 #[allow(dead_code)]
@@ -392,7 +401,8 @@ pub fn calc_partial_state_similarity(
 ) -> i64 {
     let w = target_image.width();
     let h = target_image.height();
-    let current_image = rasterize_parital_state(p, size, state, w, h);
+    let mut current_image = Image::new(w, h);
+    rasterize_parital_state(p, size, state, w, h, &mut current_image);
     calc_partial_image_similarity(p, size, &current_image, target_image)
 }
 pub fn calc_partial_image_similarity(

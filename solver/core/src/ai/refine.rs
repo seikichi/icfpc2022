@@ -47,6 +47,9 @@ impl ai::ChainedAI for RefineAi {
 
         let mut temperature;
 
+        // newが遅いので使いまわす
+        let mut candidate_partial_image = Image::new(image.width(), image.height());
+
         for iter in 0..self.n_iters {
             // tweak temperature
             let progress = (iter as f64) / (self.n_iters as f64);
@@ -78,12 +81,13 @@ impl ai::ChainedAI for RefineAi {
                     continue;
                 }
             };
-            let candidate_partial_image = rasterize_parital_state(
+            rasterize_parital_state(
                 lt,
                 size,
                 &candidate_end_state,
                 image.width(),
                 image.height(),
+                &mut candidate_partial_image,
             );
             let diff_image_score_from =
                 calc_partial_image_similarity(lt, size, &current_image, image);
@@ -114,7 +118,6 @@ impl ai::ChainedAI for RefineAi {
             };
 
             if accept {
-                info!("iter: {:3}, score: {:7} {}", iter, new_score, description);
                 prev_program = candidate_program;
                 (current_end_state, current_move_score) =
                     simulate_all(&prev_program, initial_state, image.width(), image.height())
@@ -133,6 +136,7 @@ impl ai::ChainedAI for RefineAi {
                         &current_image,
                         image,
                     );
+                info!("iter: {:3}, score: {:7} {}", iter, current_score, description);
 
                 if new_score < best_score {
                     best_score = new_score;
