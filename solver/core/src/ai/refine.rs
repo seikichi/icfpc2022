@@ -201,7 +201,7 @@ impl RefineAi {
                 let block = end_state.blocks[block_id];
                 tl = block.p;
                 size = block.size;
-                let r = rng.gen_range(0..8);
+                let r = rng.gen_range(0..4);
                 if r > 0 {
                     // change PCut point
                     let mut dx;
@@ -226,7 +226,7 @@ impl RefineAi {
                     } else {
                         return None;
                     }
-                    if rng.gen_range(0..10) == 0 {
+                    if rng.gen_range(0..2) == 0 {
                         let (next_end_state, _) = simulate_all(
                             &next_program,
                             initial_state,
@@ -256,7 +256,7 @@ impl RefineAi {
                 let block = end_state.blocks[block_id];
                 tl = block.p;
                 size = block.size;
-                let r = rng.gen_range(0..8);
+                let r = rng.gen_range(0..4);
                 if r > 0 {
                     // change LCut position
                     let mut d;
@@ -279,7 +279,7 @@ impl RefineAi {
                     } else {
                         return None;
                     }
-                    if rng.gen_range(0..10) == 0 {
+                    if rng.gen_range(0..2) == 0 {
                         let (next_end_state, _) = simulate_all(
                             &next_program,
                             initial_state,
