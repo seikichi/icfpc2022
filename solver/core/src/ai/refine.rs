@@ -334,6 +334,9 @@ impl RefineAi {
                         next_program.0[t]
                     );
                 } else {
+                    if initial_state.cost_coeff_version == 1 {
+                        return None;
+                    }
                     description = format!("remove Color: {}", next_program.0[t]);
                     next_program.0.remove(t);
                 }

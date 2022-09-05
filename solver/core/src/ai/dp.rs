@@ -71,6 +71,12 @@ impl HeadAI for DpAI {
                 .unwrap()
                 .0;
             }
+            if initial_state.cost_coeff_version == 1 {
+                ret.0.push(Move::Color {
+                    block_id: self.initial_block_id.clone().unwrap(),
+                    color: Color::ONE,
+                });
+            }
         } else {
             // call from refine ai
             // do nothing
