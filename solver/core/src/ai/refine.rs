@@ -137,8 +137,12 @@ impl ai::ChainedAI for RefineAi {
                         image,
                     );
                 info!(
-                    "iter: {:3}, score: {:7} {}",
-                    iter, current_score, description
+                    "iter: {:3}, score: {:7} (move:{}, sim:{})  {}",
+                    iter,
+                    current_score,
+                    current_move_score,
+                    current_score - current_move_score,
+                    description
                 );
 
                 if new_score < best_score {
