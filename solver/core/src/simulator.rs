@@ -103,6 +103,7 @@ impl State {
         }
     }
     // 指定したブロックが1つだけ入ったStateを返す
+    #[allow(dead_code)]
     pub fn block_state(&self, block_id: BlockId, cost_coeff_version: u8) -> Self {
         let mut blocks = HashMap::new();
         let block = self.blocks[&block_id].clone();

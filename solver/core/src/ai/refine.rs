@@ -175,14 +175,8 @@ impl RefineAi {
             let block_id = end_state.sample_active_block(rng);
             let tl = end_state.blocks[&block_id].p;
             let size = end_state.blocks[&block_id].size;
-            let mut next_program = self.solve_by_dp_ai_one_block(
-                next_program,
-                &block_id,
-                image,
-                initial_state,
-                end_state,
-                rng,
-            );
+            let mut next_program =
+                self.solve_by_dp_ai_one_block(next_program, &block_id, image, end_state, rng);
             if prev_program.len() == next_program.len() {
                 return None;
             }
@@ -222,12 +216,18 @@ impl RefineAi {
                         return None;
                     }
                     if rng.gen_range(0..10) == 0 {
+                        let (next_end_state, _) = simulate_all(
+                            &next_program,
+                            initial_state,
+                            image.width(),
+                            image.height(),
+                        )
+                        .unwrap();
                         next_program = self.solve_by_dp_ai_one_block(
                             next_program,
                             &block_id,
                             image,
-                            initial_state,
-                            end_state,
+                            &next_end_state,
                             rng,
                         );
                         next_program.remove_redundant_color_move();
@@ -266,12 +266,18 @@ impl RefineAi {
                         return None;
                     }
                     if rng.gen_range(0..10) == 0 {
+                        let (next_end_state, _) = simulate_all(
+                            &next_program,
+                            initial_state,
+                            image.width(),
+                            image.height(),
+                        )
+                        .unwrap();
                         next_program = self.solve_by_dp_ai_one_block(
                             next_program,
                             &block_id,
                             image,
-                            initial_state,
-                            end_state,
+                            &next_end_state,
                             rng,
                         );
                         next_program.remove_redundant_color_move();
@@ -331,16 +337,14 @@ impl RefineAi {
         program: Program,
         block_id: &BlockId,
         image: &Image,
-        initial_state: &State,
         end_state: &State,
         rng: &mut impl Rng,
     ) -> Program {
         let mut program = program;
         let d = rng.gen_range(4..=self.dp_divide_max);
         let c = rng.gen_range(3..=8);
-        let temp_state = end_state.block_state(block_id.clone(), initial_state.cost_coeff_version);
-        let mut dp_ai = ai::DpAI::new(d, c, 10);
-        let mut dp_program = dp_ai.solve(image, &temp_state);
+        let mut dp_ai = ai::DpAI::new(d, c, 10, Some(block_id.clone()));
+        let mut dp_program = dp_ai.solve(image, &end_state);
         program.0.append(&mut dp_program.0);
         program.remove_redundant_color_move();
         return program;
