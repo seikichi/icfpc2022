@@ -112,11 +112,12 @@ impl RefineAi {
             // 1/100 の確率でランダムにDpAIで分割する
             let end_state = simulate_all(&prev_program, initial_state).unwrap();
             let block_id = end_state.sample_active_block(rng);
-            let next_program =
+            let mut next_program =
                 self.solve_by_dp_ai_one_block(next_program, &block_id, image, initial_state, rng);
             if prev_program.len() == next_program.len() {
                 return None;
             }
+            next_program.remove_redundant_color_move();
             description = format!("Divide by DpAI: {}", block_id);
             return Some((next_program, description));
         }
@@ -155,6 +156,7 @@ impl RefineAi {
                         initial_state,
                         rng,
                     );
+                    next_program.remove_redundant_color_move();
                     description = format!("Remove PCut & divide by DpAI");
                 }
             }
@@ -191,6 +193,7 @@ impl RefineAi {
                         initial_state,
                         rng,
                     );
+                    next_program.remove_redundant_color_move();
                     description = format!("Remove LCut & divide by DpAI");
                 }
             }
@@ -200,31 +203,36 @@ impl RefineAi {
             } => {
                 let mut state = initial_state.clone();
                 simulate_partial(&mut state, &prev_program.0[0..t]).unwrap();
-                let block = state.blocks[block_id];
-                let r = rng.gen_range(0..2);
-                let color = if r == 0 {
-                    // random sampling
-                    let x = block.p.x + rng.gen_range(0..block.size.x);
-                    let y = block.p.y + rng.gen_range(0..block.size.y);
-                    image.0[y as usize][x as usize]
+                let r = rng.gen_range(0..5);
+                if r > 0 {
+                    let block = state.blocks[block_id];
+                    let color = if r <= 2 {
+                        // random sampling
+                        let x = block.p.x + rng.gen_range(0..block.size.x);
+                        let y = block.p.y + rng.gen_range(0..block.size.y);
+                        image.0[y as usize][x as usize]
+                    } else {
+                        // average
+                        image.average(block.p, block.size)
+                    };
+                    let d = prev_color - color;
+                    let similarity = (d * 255.0).round().length() as f64;
+                    if similarity < 1.5 {
+                        return None;
+                    }
+                    next_program.0[t] = Move::Color {
+                        block_id: block_id.clone(),
+                        color,
+                    };
+                    description = format!(
+                        "change Color: {} -> {}",
+                        prev_color * 255.0,
+                        next_program.0[t]
+                    );
                 } else {
-                    // average
-                    image.average(block.p, block.size)
-                };
-                let d = prev_color - color;
-                let similarity = (d * 255.0).round().length() as f64;
-                if similarity < 1.5 {
-                    return None;
+                    description = format!("remove Color: {}", next_program.0[t]);
+                    next_program.0.remove(t);
                 }
-                next_program.0[t] = Move::Color {
-                    block_id: block_id.clone(),
-                    color,
-                };
-                description = format!(
-                    "change Color: {} -> {}",
-                    prev_color * 255.0,
-                    next_program.0[t]
-                );
             }
             _ => {
                 // Do nothing
@@ -249,8 +257,8 @@ impl RefineAi {
         let c = rng.gen_range(3..=8);
         let temp_state = end_state.block_state(block_id.clone(), initial_state.cost_coeff_version);
         let mut dp_ai = ai::DpAI::new(d, c);
-        let dp_program = dp_ai.solve(image, &temp_state);
-        program.0.append(&mut dp_program.0.clone());
+        let mut dp_program = dp_ai.solve(image, &temp_state);
+        program.0.append(&mut dp_program.0);
         program.remove_redundant_color_move();
         return program;
     }

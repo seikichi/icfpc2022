@@ -12,6 +12,7 @@ impl HeadAI for MergeAI {
     fn solve(&mut self, _image: &image::Image, initial_state: &simulator::State) -> Program {
         self.state = initial_state.clone();
         let mut ret = Program(vec![]);
+        let mut total_move_cost = 0;
         while self.active_block_num() > 1 {
             // 左上から順にマージする
             let blocks = self.state.blocks.clone();
@@ -35,11 +36,19 @@ impl HeadAI for MergeAI {
             }
             if let Some((a, b)) = target {
                 ret.0.push(Move::Merge { a, b });
+                total_move_cost += simulator::move_cost(
+                    &self.state,
+                    ret.0.last().unwrap(),
+                    _image.width(),
+                    _image.height(),
+                )
+                .unwrap();
                 simulator::simulate(&mut self.state, ret.0.last().unwrap()).unwrap();
             } else {
                 panic!("can't find mergable block");
             }
         }
+        log::info!("Merge total move cost: {}", total_move_cost);
         ret.0.push(Move::Color {
             block_id: self.merged_block_id(),
             color: Color::ONE,

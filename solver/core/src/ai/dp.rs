@@ -77,6 +77,9 @@ impl HeadAI for DpAI {
         );
         self.sampled_color.push(self.initial_block.color);
         self.sampled_color.reverse();
+        // 画像の色数が sample_color_num より小さいような場合は
+        // sampled_color が sample_color_num に満たない
+        self.sample_color_num = self.sampled_color.len();
 
         // dp
         let _score = self.calc(0, 0, d, d, 0);
@@ -120,8 +123,11 @@ impl DpAI {
         let d = self.memo.len();
         assert!(x + w <= d);
         assert!(y + h <= d);
-        if self.memo[x][y][w][h][color_id].1.is_some() {
-            return self.memo[x][y][w][h][color_id].0;
+        {
+            let memo_item = &self.memo[x][y][w][h][color_id];
+            if memo_item.1.is_some() {
+                return memo_item.0;
+            }
         }
         let mut ret = (
             self.calc_similality(x, y, w, h, color_id),
@@ -133,16 +139,16 @@ impl DpAI {
         let target_area = ((rb.x - lt.x) * (rb.y - lt.y)) as usize;
         assert!(target_area > 0);
         for c in 0..self.sampled_color.len() {
-            let mut nprogram = Program(vec![]);
+            let mut color_move = None;
             let mut ncost = 0;
             if c != color_id {
                 // Color
-                nprogram.0.push(Move::Color {
+                let mv = Move::Color {
                     block_id: BlockId::default(),
                     color: self.sampled_color[c],
-                });
+                };
                 ncost += simulator::move_cost_without_state(
-                    &nprogram.0[0],
+                    &mv,
                     target_area,
                     self.image.width(),
                     self.image.height(),
@@ -150,11 +156,11 @@ impl DpAI {
                 );
                 let scost = self.calc_similality(x, y, w, h, c);
                 if ncost + scost < ret.0 {
-                    assert!(nprogram.0.len() == 1);
                     ret.0 = ncost + scost;
-                    ret.1 = nprogram.clone();
+                    ret.1 = Program(vec![mv.clone()]);
                     ret.2 = vec![];
                 }
+                color_move = Some(mv);
             }
             // PCut
             for lw in 1..w {
@@ -184,7 +190,10 @@ impl DpAI {
                     }
                     if ncost + nlcost < ret.0 {
                         ret.0 = ncost + nlcost;
-                        ret.1 = nprogram.clone();
+                        ret.1 = Program(vec![]);
+                        if let Some(cmv) = color_move.clone() {
+                            ret.1 .0.push(cmv);
+                        }
                         ret.1 .0.push(mv);
                         ret.2 = nlchilds;
                     }
@@ -218,7 +227,10 @@ impl DpAI {
                 }
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
-                    ret.1 = nprogram.clone();
+                    ret.1 = Program(vec![]);
+                    if let Some(cmv) = color_move.clone() {
+                        ret.1 .0.push(cmv);
+                    }
                     ret.1 .0.push(mv);
                     ret.2 = nlchilds;
                 }
@@ -250,14 +262,16 @@ impl DpAI {
                 }
                 if ncost + nlcost < ret.0 {
                     ret.0 = ncost + nlcost;
-                    ret.1 = nprogram.clone();
+                    ret.1 = Program(vec![]);
+                    if let Some(cmv) = color_move.clone() {
+                        ret.1 .0.push(cmv);
+                    }
                     ret.1 .0.push(mv);
                     ret.2 = nlchilds;
                 }
             }
         }
-        self.memo[x][y][w][h][color_id].0 = ret.0;
-        self.memo[x][y][w][h][color_id].1 = Some((ret.1, ret.2));
+        self.memo[x][y][w][h][color_id] = (ret.0, Some((ret.1, ret.2)));
         // println!(
         //     "{} {} {} {} {} {} {:?} {}",
         //     x, y, w, h, color_id, ret.0, state, ret.1
