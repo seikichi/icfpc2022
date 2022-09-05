@@ -136,7 +136,10 @@ impl ai::ChainedAI for RefineAi {
                         &current_image,
                         image,
                     );
-                info!("iter: {:3}, score: {:7} {}", iter, current_score, description);
+                info!(
+                    "iter: {:3}, score: {:7} {}",
+                    iter, current_score, description
+                );
 
                 if new_score < best_score {
                     best_score = new_score;
@@ -214,16 +217,20 @@ impl RefineAi {
                     } else {
                         return None;
                     }
-                    next_program = self.solve_by_dp_ai_one_block(
-                        next_program,
-                        &block_id,
-                        image,
-                        initial_state,
-                        end_state,
-                        rng,
-                    );
-                    next_program.remove_redundant_color_move();
-                    description = format!("Remove PCut & divide by DpAI");
+                    if rng.gen_range(0..10) == 0 {
+                        next_program = self.solve_by_dp_ai_one_block(
+                            next_program,
+                            &block_id,
+                            image,
+                            initial_state,
+                            end_state,
+                            rng,
+                        );
+                        next_program.remove_redundant_color_move();
+                        description = format!("Remove PCut & divide by DpAI");
+                    } else {
+                        description = format!("Remove PCut");
+                    }
                 }
             }
             Move::LCut {
@@ -254,16 +261,20 @@ impl RefineAi {
                     } else {
                         return None;
                     }
-                    next_program = self.solve_by_dp_ai_one_block(
-                        next_program,
-                        &block_id,
-                        image,
-                        initial_state,
-                        end_state,
-                        rng,
-                    );
-                    next_program.remove_redundant_color_move();
-                    description = format!("Remove LCut & divide by DpAI");
+                    if rng.gen_range(0..10) == 0 {
+                        next_program = self.solve_by_dp_ai_one_block(
+                            next_program,
+                            &block_id,
+                            image,
+                            initial_state,
+                            end_state,
+                            rng,
+                        );
+                        next_program.remove_redundant_color_move();
+                        description = format!("Remove LCut & divide by DpAI");
+                    } else {
+                        description = format!("Remove LCut");
+                    }
                 }
             }
             Move::Color {
