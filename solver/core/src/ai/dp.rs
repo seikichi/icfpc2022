@@ -33,9 +33,11 @@ pub struct DpAI {
     rng: ThreadRng,
     sample_color_num: usize,
     sampled_color: Vec<Color>,
-    // memo[x][y][w][h][color_id] -> (score, Some(今のブロックに対するProgram, 復元用の次の最適解))
-    memo: Vec<Vec<Vec<Vec<Vec<(i64, Option<(ArrayVec<Move, 2>, ArrayVec<Child, 4>)>)>>>>>,
-    similality_memo: Vec<Vec<Vec<Option<i64>>>>,
+    // memo[color_id][x][y][w][h] -> score
+    // memo_restore[color_id][x][y][w][h] -> Some(今のブロックに対するProgram, 復元用の次の最適解))
+    memo: Vec<Vec<Vec<Vec<Vec<i32>>>>>,
+    memo_restore: Vec<Vec<Vec<Vec<Vec<Option<(ArrayVec<Move, 2>, ArrayVec<Child, 4>)>>>>>>,
+    similality_memo: Vec<Vec<Vec<Option<i32>>>>,
     image: image::Image,
     initial_state: State,
     initial_block: SimpleBlock,
@@ -43,7 +45,7 @@ pub struct DpAI {
 
 impl HeadAI for DpAI {
     fn solve(&mut self, image: &image::Image, initial_state: &simulator::State) -> Program {
-        let d = self.memo.len();
+        let d = self.memo[0].len();
         self.image = image.clone();
         let mut ret = Program(vec![]);
         let mut initial_block_id = initial_state.blocks.keys().next().unwrap().clone();
@@ -95,20 +97,26 @@ impl DpAI {
     pub fn new(divide_num: usize, sample_color_num: usize) -> Self {
         let memo = vec![
             vec![
-                vec![
-                    vec![vec![(1 << 30, None); sample_color_num]; divide_num + 1];
-                    divide_num + 1
-                ];
+                vec![vec![vec![1 << 30; divide_num + 1]; divide_num + 1]; divide_num];
                 divide_num
             ];
-            divide_num
+            sample_color_num
         ];
-        let similality_memo = vec![vec![vec![None; sample_color_num]; divide_num]; divide_num];
+        let memo_restore =
+            vec![
+                vec![
+                    vec![vec![vec![None; divide_num + 1]; divide_num + 1]; divide_num];
+                    divide_num
+                ];
+                sample_color_num
+            ];
+        let similality_memo = vec![vec![vec![None; divide_num]; divide_num]; sample_color_num];
         DpAI {
             rng: rand::thread_rng(),
             sample_color_num,
             sampled_color: vec![],
             memo,
+            memo_restore,
             similality_memo,
             image: image::Image::new(1, 1),
             initial_state: State::initial_state(0, 0, 0),
@@ -120,14 +128,14 @@ impl DpAI {
             },
         }
     }
-    fn calc(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i64 {
-        let d = self.memo.len();
+    fn calc(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i32 {
+        let d = self.memo[0].len();
         assert!(x + w <= d);
         assert!(y + h <= d);
         {
-            let memo_item = &self.memo[x][y][w][h][color_id];
-            if memo_item.1.is_some() {
-                return memo_item.0;
+            let memo_item = self.memo[color_id][x][y][w][h];
+            if memo_item < (1 << 30) {
+                return memo_item;
             }
         }
         let mut ret = (
@@ -154,7 +162,7 @@ impl DpAI {
                     self.image.width(),
                     self.image.height(),
                     self.initial_state.cost_coeff_version,
-                );
+                ) as i32;
                 let scost = self.calc_similality(x, y, w, h, c);
                 if ncost + scost < ret.0 {
                     ret.0 = ncost + scost;
@@ -179,7 +187,7 @@ impl DpAI {
                         self.image.width(),
                         self.image.height(),
                         self.initial_state.cost_coeff_version,
-                    );
+                    ) as i32;
                     let mut nlchilds = ArrayVec::<_, 4>::new();
                     for i in 0..4 {
                         let nx = x + dx[i];
@@ -216,7 +224,7 @@ impl DpAI {
                     self.image.width(),
                     self.image.height(),
                     self.initial_state.cost_coeff_version,
-                );
+                ) as i32;
                 let mut nlchilds = ArrayVec::<_, 4>::new();
                 for i in 0..2 {
                     let nx = x + dx[i];
@@ -251,7 +259,7 @@ impl DpAI {
                     self.image.width(),
                     self.image.height(),
                     self.initial_state.cost_coeff_version,
-                );
+                ) as i32;
                 let mut nlchilds = ArrayVec::<_, 4>::new();
                 for i in 0..2 {
                     let nx = x + dx[i];
@@ -273,7 +281,8 @@ impl DpAI {
                 }
             }
         }
-        self.memo[x][y][w][h][color_id] = (ret.0, Some((ret.1, ret.2)));
+        self.memo[color_id][x][y][w][h] = ret.0;
+        self.memo_restore[color_id][x][y][w][h] = Some((ret.1, ret.2));
         // println!(
         //     "{} {} {} {} {} {} {:?} {}",
         //     x, y, w, h, color_id, ret.0, state, ret.1
@@ -292,7 +301,7 @@ impl DpAI {
         color_id: usize,
         block_id: &mut BlockId,
     ) {
-        let (mut lprogram, childs) = self.memo[x][y][w][h][color_id].1.clone().unwrap();
+        let (mut lprogram, childs) = self.memo_restore[color_id][x][y][w][h].clone().unwrap();
         for mv in lprogram.iter_mut() {
             mv.convert_block_id(&block_id);
             program.0.push(mv.clone());
@@ -313,13 +322,13 @@ impl DpAI {
         }
     }
 
-    fn calc_similality(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i64 {
+    fn calc_similality(&mut self, x: usize, y: usize, w: usize, h: usize, color_id: usize) -> i32 {
         let mut ret = 0;
         for dx in 0..w {
             let nx = x + dx;
             for dy in 0..h {
                 let ny = y + dy;
-                if let Some(s) = self.similality_memo[nx][ny][color_id] {
+                if let Some(s) = self.similality_memo[color_id][nx][ny] {
                     ret += s;
                 } else {
                     let lt = self.convert_point(nx, ny);
@@ -329,8 +338,8 @@ impl DpAI {
                         Point::new(rb.x - lt.x, rb.y - lt.y),
                         self.sampled_color[color_id],
                         &self.image,
-                    );
-                    self.similality_memo[nx][ny][color_id] = Some(s);
+                    ) as i32;
+                    self.similality_memo[color_id][nx][ny] = Some(s);
                     ret += s;
                 }
             }
@@ -358,7 +367,7 @@ impl DpAI {
     //     }
     // }
     fn convert_point(&self, x: usize, y: usize) -> Point {
-        let d = self.memo.len();
+        let d = self.memo[0].len();
         let l = std::cmp::min(
             self.topleft().x + self.width() as i32,
             self.topleft().x + (x * self.width() / d) as i32,
